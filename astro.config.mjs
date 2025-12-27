@@ -3,13 +3,13 @@ import { defineConfig } from "astro/config";
 import cloudflare from "@astrojs/cloudflare";
 import tailwindcss from "@tailwindcss/vite";
 
-const isDev = import.meta.env.MODE === "development";
+const isCloudflare = !!process.env.CF_PAGES;
 
 export default defineConfig({
   output: "hybrid",
 
-  // ❌ Do not use Cloudflare adapter in dev (Windows safe)
-  adapter: isDev ? undefined : cloudflare(),
+  // ✅ Enable adapter ONLY on Cloudflare Pages
+  adapter: isCloudflare ? cloudflare() : undefined,
 
   // ✅ Disable Sharp (Cloudflare compatible)
   image: {
@@ -18,9 +18,9 @@ export default defineConfig({
     },
   },
 
-  site: isDev
-    ? "http://localhost:4321"
-    : "https://www.germanyfinanz.news",
+  site: isCloudflare
+    ? process.env.CF_PAGES_URL
+    : "http://localhost:4321",
 
   vite: {
     plugins: [tailwindcss()],
