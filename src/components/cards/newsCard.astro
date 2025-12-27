@@ -1,0 +1,55 @@
+---
+import { Image } from "astro:assets";
+import Divider from "../bases/divider.astro";
+
+type Article = {
+  title: string;
+  slug: string;
+  description?: string;
+  cover?: string;
+  publishedAt?: string;
+};
+
+type Props = {
+  article: Article;
+  index: number;
+};
+
+const { article } = Astro.props;
+---
+
+<article
+  class="col-span-1 group max-w-sm mx-auto flex flex-col gap-2 h-full relative isolate"
+>
+  <div class="aspect-video overflow-hidden rounded-md">
+    {
+      article.cover && (
+        <img
+          src={article.cover}
+          alt={article.title}
+          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+        />
+      )
+    }
+  </div>
+
+  <h3 class="text-lg font-semibold leading-snug">
+    {article.title}
+  </h3>
+
+  {
+    article.description && (
+      <p class="text-sm text-gray-600">{article.description}</p>
+    )
+  }
+
+  <Divider />
+
+  <a
+    href={`/${article.slug}`}
+    class="text-sm font-medium text-primary hover:underline mt-auto"
+  >
+    Read more →
+  </a>
+</article>

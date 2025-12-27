@@ -1,0 +1,57 @@
+---
+export const prerender = false;
+
+import BaseLayout from "@/layouts/base.astro";
+import ContentLayout from "@/layouts/content.astro";
+
+const { slug } = Astro.params;
+
+const WORKER_URL =
+  "https://news-cache-worker.ankitnav1998.workers.dev/news-slug";
+
+/* ✅ Fetch article directly by slug */
+const res = await fetch(`${WORKER_URL}?slug=${encodeURIComponent(slug)}`, {
+  headers: { Accept: "application/json" },
+});
+
+if (!res.ok) {
+  return Astro.redirect("/404");
+}
+
+const article = await res.json();
+
+/* ❌ No article */
+if (!article || !article.slug) {
+  return Astro.redirect("/404");
+}
+
+/* SEO */
+const entry = {
+  data: {
+    title: article.title,
+    description: article.title,
+    cover: article.featured_image,
+  },
+};
+---
+
+<BaseLayout entry={entry}>
+  <ContentLayout>
+    <article class="prose prose-lg mx-auto">
+      <h1>{article.title}</h1>
+
+      {
+        article.featured_image && (
+          <img
+            src={article.featured_image}
+            alt={article.title}
+            class="w-full h-auto rounded-md"
+            loading="lazy"
+          />
+        )
+      }
+
+      <div class="mt-6" set:html={article.content} />
+    </article>
+  </ContentLayout>
+</BaseLayout>

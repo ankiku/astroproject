@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+import BaseLayout from "@/layouts/base.astro";
+import { getEntry } from "astro:content";
+import LatestNews from "@/pages/_home/latestNews.astro";
+
+const entry = await getEntry("views", "home");
+
+if (!entry) {
+  return Astro.redirect("/404");
+}
+---
+
+<BaseLayout entry={entry}>
+  <LatestNews />
+</BaseLayout>

@@ -1,0 +1,63 @@
+---
+import Divider from "@/components/bases/divider.astro";
+import { getDateDistance } from "@/lib/utils/date";
+
+type Article = {
+  title: string;
+  slug: string;
+  description?: string;
+  cover?: string;
+  publishedAt?: string;
+};
+
+type Props = {
+  article: Article;
+};
+
+const { article } = Astro.props;
+---
+
+<article class="group relative isolate flex flex-col-reverse md:flex-col gap-4">
+  <div class="aspect-video overflow-hidden rounded-md">
+    {
+      article.cover && (
+        <img
+          src={article.cover}
+          alt={article.title}
+          class="w-full h-full object-cover"
+          loading="eager"
+        />
+      )
+    }
+  </div>
+
+  <div class="flex flex-col gap-2">
+    <div>
+      <h2
+        class="text-xl font-semibold lg:group-hover:underline underline-offset-2"
+      >
+        <a href={`/es/${article.slug}`}>
+          <span class="absolute inset-0 z-10 pointer-events-none"></span>
+          {article.title}
+        </a>
+      </h2>
+
+      {
+        article.description && (
+          <p class="text-base-content/90 text-base max-w-lg">
+            {article.description}
+          </p>
+        )
+      }
+    </div>
+
+    {
+      article.publishedAt && (
+        <div class="flex items-center text-xs text-base-content/80 mt-2">
+          <Divider />
+          <span>{getDateDistance(article.publishedAt)}</span>
+        </div>
+      )
+    }
+  </div>
+</article>
