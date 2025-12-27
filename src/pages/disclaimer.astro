@@ -1,19 +1,39 @@
 ---
-import ContentLayout from "@/layouts/content.astro";
 import BaseLayout from "@/layouts/base.astro";
-import { getEntry, render } from "astro:content";
+import ContentLayout from "@/layouts/content.astro";
 
-const entry = await getEntry("views", "disclaimer");
-
-if (!entry) {
-  return Astro.redirect("/404");
-}
-
-const { Content } = await render(entry);
+const entry = {
+  data: {
+    title: "Disclaimer",
+    description: "Legal disclaimer for Germany Finanz",
+  },
+};
 ---
 
 <BaseLayout entry={entry}>
   <ContentLayout>
-    <Content />
+    <article class="prose mx-auto">
+      <h1>Disclaimer</h1>
+
+      <p>
+        The information provided on Germany Finanz is published in good faith
+        and for general informational purposes only.
+      </p>
+
+      <p>
+        Germany Finanz makes no warranties regarding the completeness,
+        reliability, or accuracy of this information.
+      </p>
+
+      <p>
+        Any action you take upon the information on this website is strictly at
+        your own risk.
+      </p>
+
+      <p>
+        Germany Finanz will not be liable for any losses or damages in
+        connection with the use of our website.
+      </p>
+    </article>
   </ContentLayout>
 </BaseLayout>

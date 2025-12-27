@@ -2,10 +2,6 @@ import type { Link } from "../types";
 
 export const SITE = {
   title: "Astro News",
-  description: "A news website built with Astro",
-  author: "Mohammad Rahmani",
-  url: "https://astro-news-six.vercel.app",
-  github: "https://github.com/Mrahmani71/astro-news",
   locale: "en-US",
   dir: "ltr",
   charset: "UTF-8",
@@ -30,11 +26,11 @@ export const OTHER_LINKS1: Link[] = [
     text: "About us",
   },
   {
-    href: "/privacy",
+    href: "/privacy-policy",
     text: "Privacy Policy",
   },
   {
-    href: "/terms",
+    href: "/terms-and-conditions",
     text: "Terms & Conditions",
   },
   {
@@ -42,7 +38,7 @@ export const OTHER_LINKS1: Link[] = [
     text: "Disclaimer",
   },
   {
-    href: "/contact",
+    href: "/contact-us",
     text: "Contact Us",
   },
 ];

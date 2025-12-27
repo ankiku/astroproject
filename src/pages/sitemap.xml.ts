@@ -1,6 +1,4 @@
-// src/pages/sitemap.xml.ts
-
-export const prerender = false; // 🔥 REQUIRED
+export const prerender = false; // 🔥 REQUIRED (SSR)
 
 export async function GET({ request, site }) {
   /* ✅ Base site URL (from astro.config.mjs) */
@@ -8,7 +6,7 @@ export async function GET({ request, site }) {
     site?.toString().replace(/\/$/, "") ||
     "https://www.germanyfinanz.news";
 
-  /* ✅ Get host from request (SSR only) */
+  /* ✅ Get host from request */
   let host = request.headers.get("host") || "";
 
   /* ✅ Normalize local dev hosts */
@@ -17,11 +15,11 @@ export async function GET({ request, site }) {
     host.includes("127.0.0.1") ||
     host.includes("astro.local")
   ) {
-    host = "www.germanyfinanz.news"; // backend site key
+    host = "www.germanyfinanz.news";
   }
 
-  /* ✅ Django API (direct, no worker) */
-  const API_URL = `https://calcstatetax.com/api/sitemap/?site=https://${host}`;
+  /* ✅ Django API */
+  const API_URL = `https://calcstatetax.com/api/news/?site=https://${host}`;
 
   const res = await fetch(API_URL, {
     headers: { Accept: "application/json" },
@@ -34,29 +32,58 @@ export async function GET({ request, site }) {
   const data = await res.json();
   const articles = data.articles || [];
 
-  const urls = articles
+  /* ✅ Static URLs (important) */
+  const staticUrls = [
+    "",
+    "/about",
+    "/contact",
+    "/privacy-policy",
+    "/terma-and-conditions",
+    "/disclaimer",
+    "/contact-us",
+    "/sitemap.xml",
+    "/rss.xml",
+  ];
+
+  const staticEntries = staticUrls
+    .map((path) => {
+      return `
+  <url>
+    <loc>${base}${path}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    })
+    .join("");
+
+  /* ✅ Dynamic article URLs */
+  const articleEntries = articles
     .map((article) => {
       const lastmod = article.created_at
-        ? article.created_at.split("T")[0]
-        : new Date().toISOString().split("T")[0];
+        ? new Date(article.created_at).toISOString()
+        : "";
 
       return `
   <url>
     <loc>${base}/${article.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
+    ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
   </url>`;
     })
     .join("");
 
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls}
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+>
+${staticEntries}
+${articleEntries}
 </urlset>`,
     {
       headers: {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=3600",
+        "Content-Type": "application/xml",
       },
     }
   );

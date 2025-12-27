@@ -1,0 +1,48 @@
+---
+import BaseLayout from "@/layouts/base.astro";
+import ContentLayout from "@/layouts/content.astro";
+
+const entry = {
+  data: {
+    title: "Terms and Conditions",
+    description: "Terms and conditions for using Germany Finanz",
+  },
+};
+---
+
+<BaseLayout entry={entry}>
+  <ContentLayout>
+    <article class="prose mx-auto">
+      <h1>Terms and Conditions</h1>
+
+      <p>
+        By accessing and using Germany Finanz, you agree to comply with the
+        following terms and conditions.
+      </p>
+
+      <h2>Use of Content</h2>
+      <p>
+        All content published on this website is for informational purposes
+        only. You may not reproduce, distribute, or modify content without
+        permission.
+      </p>
+
+      <h2>No Financial Advice</h2>
+      <p>
+        The content on this website does not constitute financial, legal, or
+        investment advice. Always consult a qualified professional.
+      </p>
+
+      <h2>Limitation of Liability</h2>
+      <p>
+        Germany Finanz is not liable for any losses or damages arising from the
+        use of this website or reliance on its content.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        We reserve the right to update these terms at any time without notice.
+      </p>
+    </article>
+  </ContentLayout>
+</BaseLayout>

@@ -1,0 +1,37 @@
+---
+import BaseLayout from "@/layouts/base.astro";
+import ContentLayout from "@/layouts/content.astro";
+
+const entry = {
+  data: {
+    title: "Contact Us",
+    description: "Get in touch with Germany Finanz",
+  },
+};
+---
+
+<BaseLayout entry={entry}>
+  <ContentLayout>
+    <article class="prose mx-auto">
+      <h1>Contact Us</h1>
+
+      <p>
+        We’d love to hear from you. If you have questions, feedback, or
+        collaboration inquiries, feel free to reach out.
+      </p>
+
+      <h2>Email</h2>
+      <p>
+        <a href="mailto:contact@germanyfinanz.news">
+          contact@germanyfinanz.news
+        </a>
+      </p>
+
+      <h2>General Inquiries</h2>
+      <p>
+        For general questions related to our content, editorial policies, or
+        partnerships, please contact us via email.
+      </p>
+    </article>
+  </ContentLayout>
+</BaseLayout>

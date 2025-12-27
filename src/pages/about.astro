@@ -1,19 +1,30 @@
 ---
-import ContentLayout from "@/layouts/content.astro";
 import BaseLayout from "@/layouts/base.astro";
-import { getEntry, render } from "astro:content";
+import ContentLayout from "@/layouts/content.astro";
 
-const entry = await getEntry("views", "about");
-
-if (!entry) {
-  return Astro.redirect("/404");
-}
-
-const { Content } = await render(entry);
+const entry = {
+  data: {
+    title: "About Us",
+    description: "About Germany Finanz",
+  },
+};
 ---
 
 <BaseLayout entry={entry}>
   <ContentLayout>
-    <Content />
+    <article class="prose mx-auto">
+      <h1>About Us</h1>
+
+      <p>
+        Germany Finanz is a digital platform providing clear, timely, and
+        trustworthy financial and economic news for readers across Europe and
+        beyond.
+      </p>
+
+      <p>
+        Our goal is to simplify complex financial topics and make them
+        accessible to everyone.
+      </p>
+    </article>
   </ContentLayout>
 </BaseLayout>

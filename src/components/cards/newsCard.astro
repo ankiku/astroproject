@@ -1,5 +1,4 @@
 ---
-import { Image } from "astro:assets";
 import Divider from "../bases/divider.astro";
 
 type Article = {
@@ -7,7 +6,6 @@ type Article = {
   slug: string;
   description?: string;
   cover?: string;
-  publishedAt?: string;
 };
 
 type Props = {
@@ -15,32 +13,56 @@ type Props = {
   index: number;
 };
 
-const { article } = Astro.props;
+const { article, index } = Astro.props;
+
+/**
+ * Performance rules:
+ * - Mobile: eager load first 2
+ * - Desktop: eager load only first
+ */
+const eagerLoad = index === 0 || index === 1;
 ---
 
 <article
-  class="col-span-1 group max-w-sm mx-auto flex flex-col gap-2 h-full relative isolate"
+  class="col-span-1 max-w-sm mx-auto flex flex-col gap-2 h-full"
+  itemscope
+  itemtype="https://schema.org/Article"
 >
-  <div class="aspect-video overflow-hidden rounded-md">
-    {
-      article.cover && (
-        <img
-          src={article.cover}
-          alt={article.title}
-          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
-        />
-      )
-    }
-  </div>
+  <a
+    href={`/${article.slug}`}
+    aria-label={`Read article: ${article.title}`}
+    itemprop="url"
+  >
+    <div class="aspect-video overflow-hidden rounded-md bg-gray-100">
+      {
+        article.cover && (
+          <img
+            src={article.cover}
+            alt={article.title}
+            itemprop="image"
+            width="640"
+            height="360"
+            decoding="async"
+            loading={eagerLoad ? "eager" : "lazy"}
+            fetchpriority={eagerLoad ? "high" : "auto"}
+            class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          />
+        )
+      }
+    </div>
+  </a>
 
-  <h3 class="text-lg font-semibold leading-snug">
-    {article.title}
+  <h3 class="text-lg font-semibold leading-snug" itemprop="headline">
+    <a href={`/${article.slug}`} class="hover:underline">
+      {article.title}
+    </a>
   </h3>
 
   {
     article.description && (
-      <p class="text-sm text-gray-600">{article.description}</p>
+      <p class="text-sm text-gray-600" itemprop="description">
+        {article.description}
+      </p>
     )
   }
 

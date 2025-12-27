@@ -1,5 +1,3 @@
-// src/pages/sitemap.xml.ts
-
 export const prerender = false; // 🔥 REQUIRED
 
 export async function GET({ request, site }) {

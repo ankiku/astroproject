@@ -1,0 +1,46 @@
+---
+import BaseLayout from "@/layouts/base.astro";
+import ContentLayout from "@/layouts/content.astro";
+
+const entry = {
+  data: {
+    title: "Privacy Policy",
+    description: "Privacy policy of Germany Finanz",
+  },
+};
+---
+
+<BaseLayout entry={entry}>
+  <ContentLayout>
+    <article class="prose mx-auto">
+      <h1>Privacy Policy</h1>
+
+      <p>
+        At Germany Finanz, your privacy is important to us. This Privacy Policy
+        explains how we collect, use, and protect your information.
+      </p>
+
+      <h2>Information We Collect</h2>
+      <p>
+        We may collect non-personal information such as browser type, device
+        information, pages visited, and referral sources to improve our website.
+      </p>
+
+      <h2>Cookies</h2>
+      <p>
+        We may use cookies to enhance user experience and analyze traffic. You
+        can disable cookies in your browser settings at any time.
+      </p>
+
+      <h2>Third-Party Services</h2>
+      <p>
+        We may use third-party tools such as analytics or advertising services.
+        These providers may use cookies or similar technologies according to
+        their own privacy policies.
+      </p>
+
+      <h2>Consent</h2>
+      <p>By using our website, you consent to this Privacy Policy.</p>
+    </article>
+  </ContentLayout>
+</BaseLayout>
