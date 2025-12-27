@@ -80,16 +80,6 @@ const OGImage = new URL(meta.ogImage, Astro.url).href;
           property="article:modified_time"
           content={new Date(meta.lastModified).toISOString()}
         />
-
-        {meta.authors.map((author) => (
-          <>
-            <meta property="author" content={author.name} />
-            <meta
-              property="article:author"
-              content={`${Astro.site}authors/${author.link}`}
-            />
-          </>
-        ))}
       </>
     ) : null
   }
