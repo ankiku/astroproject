@@ -1,6 +1,5 @@
 ---
 import Divider from "../bases/divider.astro";
-import { Image } from "astro:assets";
 
 type Article = {
   title: string;
@@ -37,15 +36,13 @@ const eagerLoad = index === 0 || index === 1;
     <div class="aspect-video overflow-hidden rounded-md bg-gray-100">
       {
         article.cover && (
-          <Image
+          <img
             src={article.cover}
             alt={article.title}
             itemprop="image"
-            widths={[320, 480, 640, 768]}
-            sizes="(max-width: 768px) 90vw, 640px"
-            format="webp"
-            quality={70}
-            inferSize={true}
+            width="640"
+            height="360"
+            decoding="async"
             loading={eagerLoad ? "eager" : "lazy"}
             fetchpriority={eagerLoad ? "high" : "auto"}
             class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"

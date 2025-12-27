@@ -17,15 +17,7 @@ export default defineConfig({
       entrypoint: "astro/assets/services/noop",
     },
   },
-  image: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "calcstatetax.com",
-        pathname: "/media/generated/news/**",
-      },
-    ],
-  },
+
   site: isCloudflare
     ? process.env.CF_PAGES_URL
     : "http://localhost:4321",
@@ -38,4 +30,3 @@ export default defineConfig({
     },
   },
 });
-
