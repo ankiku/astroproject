@@ -1,7 +1,6 @@
 ---
 export const prerender = false;
 
-import { cfImage } from "@/lib/cfImage";
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
 
@@ -54,31 +53,20 @@ const entry = {
       article.updated_at || article.created_at || new Date().toISOString(),
   },
 };
-
-/* ✅ ARTICLE LCP IMAGE */
-const heroImage = article.featured_image || null;
 ---
-
-{/* ✅ PRELOAD ARTICLE LCP IMAGE */}
-{
-  heroImage && (
-    <link rel="preload" as="image" href={heroImage} fetchpriority="high" />
-  )
-}
 
 <BaseLayout entry={entry}>
   <ContentLayout>
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
 
-      {/* ✅ LCP OPTIMIZED IMAGE */}
       {
-        heroImage && (
-          <link
-            rel="preload"
-            as="image"
-            href={cfImage(heroImage, { w: 1200, h: 630 })}
-            fetchpriority="high"
+        article.featured_image && (
+          <img
+            src={article.featured_image}
+            alt={article.title}
+            class="w-full h-auto rounded-md"
+            loading="lazy"
           />
         )
       }

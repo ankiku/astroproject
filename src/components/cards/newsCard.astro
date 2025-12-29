@@ -1,6 +1,5 @@
 ---
 import Divider from "../bases/divider.astro";
-import { cfImage } from "@/lib/cfImage";
 
 type Article = {
   title: string;
@@ -16,8 +15,12 @@ type Props = {
 
 const { article, index } = Astro.props;
 
-/* ✅ LCP RULE: ONLY FIRST IMAGE */
-const eagerLoad = index === 0;
+/**
+ * Performance rules:
+ * - Mobile: eager load first 2
+ * - Desktop: eager load only first
+ */
+const eagerLoad = index === 0 || index === 1;
 ---
 
 <article
@@ -34,14 +37,14 @@ const eagerLoad = index === 0;
       {
         article.cover && (
           <img
-            src={cfImage(article.cover, { w: 640, h: 360 })}
+            src={article.cover}
             alt={article.title}
+            itemprop="image"
             width="640"
             height="360"
+            decoding="async"
             loading={eagerLoad ? "eager" : "lazy"}
             fetchpriority={eagerLoad ? "high" : "auto"}
-            decoding="async"
-            sizes="(max-width: 768px) 100vw, 33vw"
             class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           />
         )
