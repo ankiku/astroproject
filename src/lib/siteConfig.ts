@@ -6,22 +6,59 @@ export type SiteConfig = {
 
 /* ---------- DOMAIN CONFIG ---------- */
 export const siteConfig: Record<string, SiteConfig> = {
+  /* ===== Germany Finanz ===== */
   "germanyfinanz.news": {
     title: "Germany Finanz News",
     shortTitle: "Germany Finanz",
     analyticsId: "G-AAAAAAA",
   },
+  "www.germanyfinanz.news": {
+    title: "Germany Finanz News",
+    shortTitle: "Germany Finanz",
+    analyticsId: "G-AAAAAAA",
+  },
 
+  /* ===== Astro Local ===== */
   "astro.local": {
     title: "Astro Local News",
     shortTitle: "Astro News",
     analyticsId: "G-BBBBBBB",
   },
 
-  "ingridgrieveproperty.co.nz": {
-    title: "Ingrid Grieve Property",
-    shortTitle: "Ingrid Property",
+  /* ===== Buschow Henley ===== */
+  "buschowhenley.co.uk": {
+    title: "Buschow Henley",
+    shortTitle: "Buschow",
+    analyticsId: "G-CCCCCCC", // 🔁 replace if different
+  },
+  "www.buschowhenley.co.uk": {
+    title: "Buschow Henley",
+    shortTitle: "Buschow",
     analyticsId: "G-CCCCCCC",
+  },
+
+  /* ===== Pacifica Day Spa ===== */
+  "pacificadayspa.co.uk": {
+    title: "Pacifica Day Spa",
+    shortTitle: "Pacifica Spa",
+    analyticsId: "G-DDDDDDD", // 🔁 replace if different
+  },
+  "www.pacificadayspa.co.uk": {
+    title: "Pacifica Day Spa",
+    shortTitle: "Pacifica Spa",
+    analyticsId: "G-DDDDDDD",
+  },
+
+  /* ===== The Garden Cafe Cambridge ===== */
+  "thegardencafecambridge.co.uk": {
+    title: "The Garden Cafe Cambridge",
+    shortTitle: "The Garden Cafe",
+    analyticsId: "G-EEEEEEE", // 🔁 replace if different
+  },
+  "www.thegardencafecambridge.co.uk": {
+    title: "The Garden Cafe Cambridge",
+    shortTitle: "The Garden Cafe",
+    analyticsId: "G-EEEEEEE",
   },
 };
 
@@ -32,6 +69,7 @@ export function getSiteFromRequest(request?: Request) {
       return {
         title: "News",
         origin: "",
+        hostname: "",
       };
     }
 
@@ -47,13 +85,14 @@ export function getSiteFromRequest(request?: Request) {
 
     return {
       ...site,
-      origin: url.origin,   // ✅ THIS IS WHAT YOU NEED
+      origin: url.origin,
       hostname,
     };
   } catch {
     return {
       title: "News",
       origin: "",
+      hostname: "",
     };
   }
 }
