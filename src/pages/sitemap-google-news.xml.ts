@@ -20,8 +20,18 @@ function getApiSite(request: Request) {
     return "https://www.germanyfinanz.news";
   }
 
-  // Production → actual domain
   return `https://${host}`;
+}
+
+/* ✅ Empty Google News sitemap (SAFE fallback) */
+function emptyGoogleNewsSitemap() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+>
+</urlset>`;
 }
 
 export async function GET({ request }) {
@@ -30,30 +40,42 @@ export async function GET({ request }) {
 
   const API_URL = `https://calcstatetax.com/api/news/?site=${apiSite}`;
 
-  const res = await fetch(API_URL, {
-    headers: { Accept: "application/json" },
-  });
+  let articles: any[] = [];
 
-  if (!res.ok) {
-    console.error("News API failed:", API_URL, res.status);
-    return new Response("Failed to generate Google News sitemap", {
-      status: 500,
+  try {
+    const res = await fetch(API_URL, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      articles = data.articles || [];
+    }
+  } catch (err) {
+    console.error("Google News sitemap API error:", err);
+  }
+
+  /* ⏱ LAST 48 HOURS ONLY (GOOGLE NEWS RULE) */
+  const now = new Date();
+  const fortyEightHoursAgo = new Date(
+    now.getTime() - 48 * 60 * 60 * 1000
+  );
+
+  const recentArticles = articles
+    .filter((a) => a.created_at && a.slug && a.title)
+    .filter(
+      (a) => new Date(a.created_at) >= fortyEightHoursAgo
+    )
+    .slice(0, 1000);
+
+  /* No recent articles → return EMPTY sitemap */
+  if (!recentArticles.length) {
+    return new Response(emptyGoogleNewsSitemap(), {
+      headers: { "Content-Type": "application/xml" },
     });
   }
 
-  const data = await res.json();
-  const articles = data.articles || [];
-
-  /* 🔧 TEST MODE: last 30 days */
-  const now = new Date();
-  const thirtyDaysAgo = new Date(
-    now.getTime() - 30 * 24 * 60 * 60 * 1000
-  );
-
-  const entries = articles
-    .filter((a) => a.created_at && a.slug && a.title)
-    .filter((a) => new Date(a.created_at) >= thirtyDaysAgo)
-    .slice(0, 1000)
+  const entries = recentArticles
     .map((article) => {
       const pubDate = new Date(article.created_at).toISOString();
 
@@ -81,6 +103,8 @@ export async function GET({ request }) {
 >
 ${entries}
 </urlset>`,
-    { headers: { "Content-Type": "application/xml" } }
+    {
+      headers: { "Content-Type": "application/xml" },
+    }
   );
 }
