@@ -8,19 +8,23 @@ const isCloudflare = !!process.env.CF_PAGES;
 export default defineConfig({
   output: "hybrid",
 
-  // ✅ Enable adapter ONLY on Cloudflare Pages
+  // Enable adapter only on Cloudflare Pages
   adapter: isCloudflare ? cloudflare() : undefined,
 
-  // ✅ Disable Sharp (Cloudflare compatible)
+  // Cloudflare-compatible image handling
   image: {
     service: {
       entrypoint: "astro/assets/services/noop",
     },
   },
 
-  site: isCloudflare
-    ? process.env.CF_PAGES_URL
-    : "http://localhost:4321",
+  /**
+   * IMPORTANT:
+   * Do NOT set `site` for multi-domain projects.
+   * Canonical URLs are generated per-request
+   * using request.headers.host in endpoints.
+   */
+  site: undefined,
 
   vite: {
     plugins: [tailwindcss()],
