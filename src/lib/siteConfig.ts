@@ -74,18 +74,32 @@ export function getSiteFromRequest(request?: Request) {
     }
 
     const url = new URL(request.url);
-    const rawHost = url.hostname;
-    const hostname = rawHost.replace(/^www\./, "");
+
+    // ✅ REAL HOST (works on CF Pages + Workers)
+    const host =
+      request.headers.get("x-forwarded-host") ||
+      request.headers.get("host") ||
+      url.hostname;
+
+    const hostname = host.replace(/^www\./, "");
+
+    // ✅ REAL PROTOCOL (fixes http://localhost issue)
+    const protocol =
+      request.headers.get("cf-connecting-proto") ||
+      request.headers.get("x-forwarded-proto") ||
+      url.protocol.replace(":", "");
+
+    const origin = `${protocol}://${host}`;
 
     const site =
-      siteConfig[rawHost] ||
+      siteConfig[host] ||
       siteConfig[hostname] || {
         title: "News",
       };
 
     return {
       ...site,
-      origin: url.origin,
+      origin,
       hostname,
     };
   } catch {
