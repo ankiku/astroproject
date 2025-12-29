@@ -1,68 +1,61 @@
-export const prerender = false; // 🔥 REQUIRED
+export const prerender = false;
 
-export async function GET({ request, site }) {
-  /* ✅ Base site URL (from astro.config.mjs) */
-  const base =
-    site?.toString().replace(/\/$/, "") ||
-    "https://www.germanyfinanz.news";
+/* ✅ Base URL for RSS output (multi-domain safe) */
+function getBaseURL(request: Request) {
+  const host = request.headers.get("host");
 
-  /* ✅ Get host from request (SSR only) */
-  let host = request.headers.get("host") || "";
-
-  /* ✅ Normalize local dev hosts */
-  if (
-    host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.includes("astro.local")
-  ) {
-    host = "www.germanyfinanz.news"; // backend site key
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "http://localhost:4321";
   }
 
-  /* ✅ Django API (direct, no worker) */
-  const API_URL = `https://calcstatetax.com/api/news/?site=https://${host}`;
+  return `https://${host}`;
+}
 
-  const res = await fetch(API_URL, {
-    headers: { Accept: "application/json" },
-  });
+/* ✅ Site key for Django API */
+function getApiSite(request: Request) {
+  const host = request.headers.get("host");
 
-  if (!res.ok) {
-    return new Response("Failed to generate sitemap", { status: 500 });
+  // Local dev → mapped to known backend site
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "https://www.germanyfinanz.news";
   }
 
-  const data = await res.json();
-  const articles = data.articles || [];
+  return `https://${host}`;
+}
 
-  const items = articles
-    .map((article) => {
-      const pubDate = article.created_at
-        ? new Date(article.created_at).toUTCString()
-        : "";
-
-      return `
-  <item>
-    <title><![CDATA[${article.title}]]></title>
-    <link>${base}/${article.slug}</link>
-    <guid>${base}/${article.slug}</guid>
-    <pubDate>${pubDate}</pubDate>
-  </item>`;
-    })
-    .join("");
-
-  return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?>
+/* ✅ Empty RSS feed (SAFE fallback) */
+function emptyRSS(base: string) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
   <title>Latest News</title>
   <link>${base}</link>
   <description>Latest news updates</description>
-  <language>es</language>
-${items}
+  <language>en</language>
 </channel>
-</rss>`,
-    {
-      headers: {
-        "Content-Type": "application/rss+xml",
-      },
-    }
-  );
+</rss>`;
 }
+
+export async function GET({ request }) {
+  const base = getBaseURL(request);
+  const apiSite = getApiSite(request);
+
+  const API_URL = `https://calcstatetax.com/api/news/?site=${apiSite}`;
+
+  let articles: any[] = [];
+
+  try {
+    const res = await fetch(API_URL, {
+      headers: { Accept: "application/json" },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      articles = data.articles || [];
+    }
+  } catch (err) {
+    console.error("RSS API error:", err);
+  }
+
+  /* No articles → return empty RSS (NOT error) */
+  if (!ar
