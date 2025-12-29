@@ -14,10 +14,8 @@ Sitemap: ${base}/sitemap.xml
 
 # Child sitemaps
 Sitemap: ${base}/sitemap-pages.xml
-Sitemap: ${base}/sitemap-news.xml
+Sitemap: ${base}/sitemap-posts.xml
 
-# Google News sitemap
-Sitemap: ${base}/sitemap-google-news.xml
 `,
     {
       headers: { "Content-Type": "text/plain" },

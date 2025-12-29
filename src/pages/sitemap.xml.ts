@@ -27,12 +27,7 @@ export async function GET({ request }) {
   </sitemap>
 
   <sitemap>
-    <loc>${base}/sitemap-news.xml</loc>
-    <lastmod>${now}</lastmod>
-  </sitemap>
-
-  <sitemap>
-    <loc>${base}/sitemap-google-news.xml</loc>
+    <loc>${base}/sitemap-posts.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>
 
