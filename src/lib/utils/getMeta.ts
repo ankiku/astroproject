@@ -34,10 +34,6 @@ export const getMeta = async (
           collection.data.cover_alt || collection.data.title,
         publishedTime: normalizeDate(collection.data.publishedTime),
         lastModified: remarkPluginFrontmatter.lastModified,
-        authors: authors.map((author) => ({
-          name: author.data.name,
-          link: `${author.id}`,
-        })),
         type: "article",
       };
 

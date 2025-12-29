@@ -1,11 +1,18 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
+import { siteConfig } from "@/lib/siteConfig";
+
+/* ---------- DOMAIN ---------- */
+const url = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = url?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+const site = siteConfig[rawHost];
 
 const entry = {
   data: {
     title: "Disclaimer",
-    description: "Legal disclaimer for Germany Finanz",
+    description: `Legal disclaimer for ${site.title}`,
   },
 };
 ---
@@ -14,25 +21,21 @@ const entry = {
   <ContentLayout>
     <article class="prose mx-auto">
       <h1>Disclaimer</h1>
-
       <p>
-        The information provided on Germany Finanz is published in good faith
-        and for general informational purposes only.
+        The content on <strong>{hostname}</strong> is provided for general information
+        purposes only. While we take care to ensure accuracy, we make no representations
+        or warranties about the completeness, reliability or suitability of the content.
       </p>
 
       <p>
-        Germany Finanz makes no warranties regarding the completeness,
-        reliability, or accuracy of this information.
+        Any reliance you place on information from this site is strictly at your
+        own risk. {hostname} will not be held responsible for any loss or damage arising
+        from your use of the site or your reliance on its content.
       </p>
 
       <p>
-        Any action you take upon the information on this website is strictly at
-        your own risk.
-      </p>
-
-      <p>
-        Germany Finanz will not be liable for any losses or damages in
-        connection with the use of our website.
+        External links are provided for reference only; we do not guarantee the
+        content, availability or policies of third-party sites.
       </p>
     </article>
   </ContentLayout>

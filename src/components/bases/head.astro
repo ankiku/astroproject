@@ -5,6 +5,7 @@ import "@fontsource/source-sans-pro/600.css";
 import "@fontsource/source-sans-pro/700.css";
 import "@fontsource-variable/source-serif-4";
 import type { ArticleMeta, Meta } from "@/lib/types";
+import { siteConfig } from "@/lib/siteConfig";
 
 type Props = {
   meta: Meta | ArticleMeta;
@@ -12,14 +13,13 @@ type Props = {
 
 const { meta } = Astro.props;
 
-/* ---------- SAFE REQUEST-BASED URL HANDLING ---------- */
+/* ---------- URL ---------- */
 const url = Astro.request ? new URL(Astro.request.url) : null;
 const origin = url ? url.origin : "";
 const pathname = url ? url.pathname : "";
-
 const canonicalURL = origin && pathname ? `${origin}${pathname}` : "";
 
-/* ---------- OG IMAGE (SAFE ABSOLUTE URL) ---------- */
+/* ---------- OG IMAGE ---------- */
 const OGImage =
   meta?.ogImage && origin
     ? meta.ogImage.startsWith("http")
@@ -27,77 +27,129 @@ const OGImage =
       : `${origin}${meta.ogImage}`
     : "";
 
-/* ---------- TYPE GUARD ---------- */
+/* ---------- TYPE ---------- */
 const isArticleMeta = (m: Meta | ArticleMeta): m is ArticleMeta =>
   m.type === "article";
+
+/* ---------- ANALYTICS (DOMAIN SAFE) ---------- */
+const hostname = (url?.hostname || "").replace(/^www\./, "");
+const isIP = /^[\d.]+$/.test(hostname);
+const site = siteConfig[url?.hostname || ""] || siteConfig[hostname];
+
+const GA_ID = !isIP ? site?.analyticsId : null;
+
+/* ---------- SCHEMA (PRECOMPUTED STRINGS) ---------- */
+const breadcrumbSchema = canonicalURL
+  ? JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: origin },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: meta.title,
+          item: canonicalURL,
+        },
+      ],
+    })
+  : null;
+
+const articleSchema =
+  isArticleMeta(meta) && canonicalURL
+    ? JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": canonicalURL,
+        },
+        headline: meta.title,
+        description: meta.description,
+        image: OGImage ? [OGImage] : [],
+        datePublished: meta.publishedTime,
+        dateModified: meta.lastModified,
+        author: meta.authors.map((a) => ({
+          "@type": "Person",
+          name: a.name,
+          url: a.link,
+        })),
+        publisher: {
+          "@type": "Organization",
+          name: "Your Site Name",
+          logo: {
+            "@type": "ImageObject",
+            url: `${origin}/favicon-96x96.png`,
+          },
+        },
+      })
+    : null;
+
+/* ---------- GA INLINE SCRIPT ---------- */
+const gaInlineScript = GA_ID
+  ? `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GA_ID}');
+`
+  : null;
 ---
 
 <head>
-  <!-- Basic -->
+  <!-- BASIC -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="generator" content={Astro.generator} />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="googlebot" content="index, follow, max-image-preview:large" />
 
-  <!-- Favicons -->
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/site.webmanifest" />
-
-  <!-- RSS & Sitemap -->
-  <link rel="sitemap" href="/sitemap.xml" />
-  <link
-    rel="alternate"
-    type="application/rss+xml"
-    title="RSS Feed"
-    href="/rss.xml"
-  />
-
-  <!-- Canonical -->
+  <!-- CANONICAL -->
   {canonicalURL && <link rel="canonical" href={canonicalURL} />}
 
   <!-- SEO -->
-  <title>{meta.title}</title>
-  <meta name="title" content={meta.metaTitle} />
+  <title>{meta.metaTitle ?? meta.title}</title>
   <meta name="description" content={meta.description} />
 
-  <!-- Open Graph -->
-  <meta property="og:type" content={meta.type} />
+  <!-- OPEN GRAPH -->
+  <meta
+    property="og:type"
+    content={isArticleMeta(meta) ? "article" : "website"}
+  />
   {canonicalURL && <meta property="og:url" content={canonicalURL} />}
-  <meta property="og:title" content={meta.metaTitle} />
+  <meta property="og:title" content={meta.title} />
   <meta property="og:description" content={meta.description} />
   {OGImage && <meta property="og:image" content={OGImage} />}
+
+  <!-- TWITTER -->
+  <meta name="twitter:card" content="summary_large_image" />
+  {canonicalURL && <meta name="twitter:url" content={canonicalURL} />}
+  <meta name="twitter:title" content={meta.title} />
+  <meta name="twitter:description" content={meta.description} />
+  {OGImage && <meta name="twitter:image" content={OGImage} />}
+
+  <!-- BREADCRUMB SCHEMA -->
   {
-    meta.ogImageAlt && (
-      <meta property="og:image:alt" content={meta.ogImageAlt} />
+    breadcrumbSchema && (
+      <script type="application/ld+json" set:html={breadcrumbSchema} />
     )
   }
 
-  <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  {canonicalURL && <meta property="twitter:url" content={canonicalURL} />}
-  <meta property="twitter:title" content={meta.metaTitle} />
-  <meta property="twitter:description" content={meta.description} />
-  {OGImage && <meta property="twitter:image" content={OGImage} />}
+  <!-- ARTICLE SCHEMA -->
   {
-    meta.ogImageAlt && (
-      <meta property="twitter:image:alt" content={meta.ogImageAlt} />
+    articleSchema && (
+      <script type="application/ld+json" set:html={articleSchema} />
     )
   }
 
-  <!-- Article Meta -->
+  <!-- GOOGLE ANALYTICS -->
   {
-    isArticleMeta(meta) && (
+    GA_ID && (
       <>
-        <meta
-          property="article:published_time"
-          content={new Date(meta.publishedTime).toISOString()}
+        <script
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
         />
-        <meta
-          property="article:modified_time"
-          content={new Date(meta.lastModified).toISOString()}
-        />
+        <script is:inline set:html={gaInlineScript} />
       </>
     )
   }

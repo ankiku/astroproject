@@ -1,6 +1,7 @@
 ---
 export const prerender = false;
 
+import { cfImage } from "@/lib/cfImage";
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
 
@@ -9,7 +10,7 @@ const { slug } = Astro.params;
 const WORKER_URL =
   "https://news-cache-worker.ankitnav1998.workers.dev/news-slug";
 
-/* ✅ Fetch article directly by slug */
+/* ---------- FETCH ARTICLE ---------- */
 const res = await fetch(`${WORKER_URL}?slug=${encodeURIComponent(slug)}`, {
   headers: { Accept: "application/json" },
 });
@@ -20,33 +21,64 @@ if (!res.ok) {
 
 const article = await res.json();
 
-/* ❌ No article */
 if (!article || !article.slug) {
   return Astro.redirect("/404");
 }
 
-/* SEO */
+/* ---------- META DESCRIPTION (25 WORDS FROM CONTENT) ---------- */
+const stripHtml = (html = "") =>
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getMetaDescription = (html = "", words = 25) => {
+  const text = stripHtml(html);
+  if (!text) return article.title;
+  return text.split(" ").slice(0, words).join(" ");
+};
+
+const metaDescription = getMetaDescription(article.content, 25);
+
+/* ---------- ENTRY FOR HEAD ---------- */
 const entry = {
   data: {
     title: article.title,
-    description: article.title,
-    cover: article.featured_image,
+    metaTitle: article.title,
+    description: metaDescription,
+    type: "article",
+    ogImage: article.featured_image || "",
+    ogImageAlt: article.title,
+    publishedTime: article.created_at || new Date().toISOString(),
+    lastModified:
+      article.updated_at || article.created_at || new Date().toISOString(),
   },
 };
+
+/* ✅ ARTICLE LCP IMAGE */
+const heroImage = article.featured_image || null;
 ---
+
+{/* ✅ PRELOAD ARTICLE LCP IMAGE */}
+{
+  heroImage && (
+    <link rel="preload" as="image" href={heroImage} fetchpriority="high" />
+  )
+}
 
 <BaseLayout entry={entry}>
   <ContentLayout>
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
 
+      {/* ✅ LCP OPTIMIZED IMAGE */}
       {
-        article.featured_image && (
-          <img
-            src={article.featured_image}
-            alt={article.title}
-            class="w-full h-auto rounded-md"
-            loading="lazy"
+        heroImage && (
+          <link
+            rel="preload"
+            as="image"
+            href={cfImage(heroImage, { w: 1200, h: 630 })}
+            fetchpriority="high"
           />
         )
       }

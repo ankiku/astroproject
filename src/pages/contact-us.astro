@@ -1,13 +1,30 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
+import { siteConfig } from "@/lib/siteConfig";
 
+/* ---------- DOMAIN ---------- */
+const urlObj = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = urlObj?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+
+/* ---------- SITE CONFIG ---------- */
+const site = siteConfig[rawHost] ||
+  siteConfig[hostname] || {
+    title: "News",
+  };
+
+/* ---------- SEO ENTRY ---------- */
 const entry = {
   data: {
     title: "Contact Us",
-    description: "Get in touch with Germany Finanz",
+    description: `Get in touch with ${site.title}`,
   },
 };
+
+/* ---------- CONTACT VALUES ---------- */
+const email = `info@${hostname}`;
+const siteUrl = urlObj ? urlObj.origin : "";
 ---
 
 <BaseLayout entry={entry}>
@@ -16,21 +33,25 @@ const entry = {
       <h1>Contact Us</h1>
 
       <p>
-        We’d love to hear from you. If you have questions, feedback, or
-        collaboration inquiries, feel free to reach out.
+        We value your feedback, suggestions, and story ideas. Please feel free
+        to contact us:
       </p>
 
-      <h2>Email</h2>
-      <p>
-        <a href="mailto:contact@germanyfinanz.news">
-          contact@germanyfinanz.news
-        </a>
-      </p>
+      <ul>
+        <li>
+          <strong>Email:</strong>
+          <a href={`mailto:${email}`}>{email}</a>
+        </li>
 
-      <h2>General Inquiries</h2>
+        <li>
+          <strong>Website:</strong>
+          <a href={siteUrl}>{siteUrl}</a>
+        </li>
+      </ul>
+
       <p>
-        For general questions related to our content, editorial policies, or
-        partnerships, please contact us via email.
+        Our editorial team looks forward to connecting with readers,
+        contributors, and partners at <strong>{site.title}</strong>.
       </p>
     </article>
   </ContentLayout>

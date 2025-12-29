@@ -1,11 +1,24 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
+import { siteConfig } from "@/lib/siteConfig";
 
+/* ---------- DOMAIN ---------- */
+const url = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = url?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+
+/* ---------- SITE CONFIG ---------- */
+const site = siteConfig[rawHost] ||
+  siteConfig[hostname] || {
+    title: "News",
+  };
+
+/* ---------- ENTRY FOR SEO ---------- */
 const entry = {
   data: {
     title: "About Us",
-    description: "About Germany Finanz",
+    description: `About ${site.title}`,
   },
 };
 ---
@@ -14,16 +27,51 @@ const entry = {
   <ContentLayout>
     <article class="prose mx-auto">
       <h1>About Us</h1>
-
       <p>
-        Germany Finanz is a digital platform providing clear, timely, and
-        trustworthy financial and economic news for readers across Europe and
-        beyond.
+        Welcome to <strong> {rawHost}</strong> — your trusted platform for authentic
+        stories, meaningful insights, and thoughtful perspectives on sustainable living,
+        culture, and design.
       </p>
 
       <p>
-        Our goal is to simplify complex financial topics and make them
-        accessible to everyone.
+        At furoshiki-giftwrap.co.uk, we’re committed to bringing you accurate,
+        unbiased, and timely coverage of the topics that shape our world—from
+        the latest trends in eco-friendly wrapping and design to deeper cultural
+        narratives and social change.
+      </p>
+
+      <p>
+        Founded with a vision of promoting transparency, creativity, and
+        responsible journalism, our site is powered by a passionate team of
+        writers, researchers, and contributors. We believe that information has
+        the power to inspire, and we aim to highlight stories often left
+        overlooked — voices from the ground, creative change-makers, and
+        design-driven movements.
+      </p>
+
+      <h3 class="wp-block-heading">Our Coverage Includes:</h3>
+
+      <ul class="wp-block-list">
+        <li>Eco-design &amp; Sustainability</li>
+
+        <li>Cultural &amp; Craft Traditions</li>
+
+        <li>Lifestyle &amp; Gift Trends</li>
+
+        <li>Business &amp; Innovation in Design</li>
+
+        <li>Local, National &amp; International Affairs</li>
+      </ul>
+
+      <p>
+        We are more than just a blog — we are a platform for awareness,
+        inspiration, and positive change. Every article reflects our dedication
+        to thoughtful storytelling and the responsibility to inform.
+      </p>
+
+      <p>
+        Thank you for choosing furoshiki-giftwrap.co.uk as your trusted source.<br
+        /><strong>Stay curious. Stay informed. Stay connected.</strong>
       </p>
     </article>
   </ContentLayout>

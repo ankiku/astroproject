@@ -2,6 +2,18 @@
 import { OTHER_LINKS } from "@/lib/config";
 import Hashtag from "@/assets/svgs/hashtag.astro";
 import Icon from "../bases/icon.astro";
+import { siteConfig } from "@/lib/siteConfig";
+
+/* ---------- DOMAIN ---------- */
+const urlObj = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = urlObj?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+
+/* ---------- SITE CONFIG ---------- */
+const site = siteConfig[rawHost] ||
+  siteConfig[hostname] || {
+    title: "News",
+  };
 ---
 
 <footer
@@ -12,7 +24,7 @@ import Icon from "../bases/icon.astro";
       <aside class="flex items-center gap-2">
         <Hashtag />
         <p>
-          <strong class="text-lg">Astro News</strong>
+          <strong class="text-lg">{site.title}</strong>
         </p>
       </aside>
     </div>

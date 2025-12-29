@@ -1,11 +1,18 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
+import { siteConfig } from "@/lib/siteConfig";
+
+/* ---------- DOMAIN ---------- */
+const url = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = url?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+const site = siteConfig[rawHost];
 
 const entry = {
   data: {
     title: "Terms and Conditions",
-    description: "Terms and conditions for using Germany Finanz",
+    description: `Terms and conditions for using ${site.title}`,
   },
 };
 ---
@@ -14,34 +21,64 @@ const entry = {
   <ContentLayout>
     <article class="prose mx-auto">
       <h1>Terms and Conditions</h1>
-
       <p>
-        By accessing and using Germany Finanz, you agree to comply with the
-        following terms and conditions.
+        Welcome to {hostname}. By accessing or using this website, you agree to
+        be bound by the following terms and conditions. If you do not agree,
+        please do not use this site.
       </p>
 
-      <h2>Use of Content</h2>
+      <h3 class="wp-block-heading">1. Acceptance of Terms</h3>
+
       <p>
-        All content published on this website is for informational purposes
-        only. You may not reproduce, distribute, or modify content without
-        permission.
+        By using our site you acknowledge that you have read, understood and
+        agree to these Terms &amp; Conditions.
       </p>
 
-      <h2>No Financial Advice</h2>
+      <h3 class="wp-block-heading">2. Content Use</h3>
+
       <p>
-        The content on this website does not constitute financial, legal, or
-        investment advice. Always consult a qualified professional.
+        All content on {hostname} — including articles, images, graphics, and videos
+        — is protected by copyright. You may not copy, reproduce, republish or distribute
+        any material without prior written permission.
       </p>
 
-      <h2>Limitation of Liability</h2>
+      <h3 class="wp-block-heading">3. Accuracy &amp; Disclaimer</h3>
+
       <p>
-        Germany Finanz is not liable for any losses or damages arising from the
-        use of this website or reliance on its content.
+        While we strive for accuracy, we do not guarantee that every piece of
+        content is complete, current or error-free. Opinions in contributions
+        are those of the authors alone.
       </p>
 
-      <h2>Changes</h2>
+      <h3 class="wp-block-heading">4. External Links</h3>
+
       <p>
-        We reserve the right to update these terms at any time without notice.
+        Our site may contain links to external websites for reference or
+        convenience. We are not responsible for the content or practices of
+        those sites.
+      </p>
+
+      <h3 class="wp-block-heading">5. User Conduct</h3>
+
+      <p>
+        Users must not post defamatory, abusive, or unlawful material in
+        comments or submissions. We reserve the right to remove or block any
+        content or user that violates these terms.
+      </p>
+
+      <h3 class="wp-block-heading">6. Limitation of Liability</h3>
+
+      <p>
+        {hostname} and its team will not be liable for any loss or damage arising
+        from your use of the site or reliance on its content.
+      </p>
+
+      <h3 class="wp-block-heading">7. Changes to Terms</h3>
+
+      <p>
+        We reserve the right to update or modify these Terms &amp; Conditions at
+        any time. Continued use of the site signifies acceptance of the updated
+        terms.
       </p>
     </article>
   </ContentLayout>

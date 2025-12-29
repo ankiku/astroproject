@@ -5,21 +5,16 @@ import HeaderSection from "./headerSection.astro";
 const WORKER_URL =
   "https://news-cache-worker.ankitnav1998.workers.dev/news-cache";
 
-/* ✅ Get host dynamically */
 let site = Astro.request.headers.get("host");
 
-/* ✅ Normalize local domains → real domain key */
 if (
   !site ||
   site.includes("localhost") ||
   site.includes("127.0.0.1") ||
   site.includes("astro.local")
 ) {
-  site = "www.germanyfinanz.news"; // 👈 backend site key
+  site = "www.germanyfinanz.news";
 }
-
-/* ✅ If backend expects full URL, enable this */
-// site = `https://${site}`;
 
 const res = await fetch(`${WORKER_URL}?site=${encodeURIComponent(site)}`, {
   headers: { Accept: "application/json" },
@@ -34,7 +29,16 @@ const articles = (data.articles || []).map((item) => ({
   cover: item.featured_image,
   publishedAt: item.created_at,
 }));
+
+/* ✅ LCP HERO IMAGE (FIRST CARD ONLY) */
+const heroImage = articles[0]?.cover || null;
 ---
+
+{
+  heroImage && (
+    <link rel="preload" as="image" href={heroImage} fetchpriority="high" />
+  )
+}
 
 <section>
   <HeaderSection title="Latest News" />
@@ -46,6 +50,10 @@ const articles = (data.articles || []).map((item) => ({
   }
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    {articles.map((article) => <NewsCard article={article} />)}
+    {
+      articles.map((article, index) => (
+        <NewsCard article={article} index={index} />
+      ))
+    }
   </div>
 </section>
