@@ -1,5 +1,4 @@
 ---
-import { SITE } from "@/lib/config";
 import Head from "@/components/bases/head.astro";
 import Header from "@/components/shared/header.astro";
 import Footer from "@/components/shared/footer.astro";
@@ -12,19 +11,21 @@ const { entry } = Astro.props;
 let meta;
 
 if (entry?.collection) {
-  // Content-collection pages (old system)
   meta = getMeta(entry);
 } else {
-  // API-driven pages (new system)
   meta = {
     title: entry?.data?.title || "News",
     description: entry?.data?.description || "",
     image: entry?.data?.cover || "",
   };
 }
+
+/* ✅ SAFE html attributes (multi-domain compatible) */
+const locale = "en"; // or derive from entry
+const dir = "ltr"; // safe default
 ---
 
-<html lang={SITE.locale} dir={SITE.dir}>
+<html lang={locale} dir={dir}>
   <Head meta={meta} />
   <body class="flex flex-col">
     <Header />

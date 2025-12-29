@@ -4,7 +4,6 @@ import "@fontsource/source-sans-pro/400.css";
 import "@fontsource/source-sans-pro/600.css";
 import "@fontsource/source-sans-pro/700.css";
 import "@fontsource-variable/source-serif-4";
-import { SITE } from "@/lib/config";
 import type { ArticleMeta, Meta } from "@/lib/types";
 
 type Props = {
@@ -13,18 +12,30 @@ type Props = {
 
 const { meta } = Astro.props;
 
-// Type guard to check if props is ArticleMeta
-const isArticleMeta = (props: Props["meta"]): props is ArticleMeta =>
-  props.type === "article";
-const canonicalURL = new URL(Astro.url.pathname, Astro.site).href;
+/* ---------- SAFE REQUEST-BASED URL HANDLING ---------- */
+const url = Astro.request ? new URL(Astro.request.url) : null;
+const origin = url ? url.origin : "";
+const pathname = url ? url.pathname : "";
 
-const OGImage = new URL(meta.ogImage, Astro.url).href;
+const canonicalURL = origin && pathname ? `${origin}${pathname}` : "";
+
+/* ---------- OG IMAGE (SAFE ABSOLUTE URL) ---------- */
+const OGImage =
+  meta?.ogImage && origin
+    ? meta.ogImage.startsWith("http")
+      ? meta.ogImage
+      : `${origin}${meta.ogImage}`
+    : "";
+
+/* ---------- TYPE GUARD ---------- */
+const isArticleMeta = (m: Meta | ArticleMeta): m is ArticleMeta =>
+  m.type === "article";
 ---
 
 <head>
-  <!-- Global Metadata -->
-  <meta charset={SITE.charset} />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- Basic -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="generator" content={Astro.generator} />
 
   <!-- Favicons -->
@@ -32,7 +43,6 @@ const OGImage = new URL(meta.ogImage, Astro.url).href;
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="shortcut icon" href="/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="Astro News" />
   <link rel="manifest" href="/site.webmanifest" />
 
   <!-- RSS & Sitemap -->
@@ -40,37 +50,45 @@ const OGImage = new URL(meta.ogImage, Astro.url).href;
   <link
     rel="alternate"
     type="application/rss+xml"
-    title={SITE.title}
-    href={new URL("rss.xml", Astro.site)}
+    title="RSS Feed"
+    href="/rss.xml"
   />
 
-  <!-- Canonical URL -->
-  <link rel="canonical" href={canonicalURL} />
+  <!-- Canonical -->
+  {canonicalURL && <link rel="canonical" href={canonicalURL} />}
 
-  <!-- Page Metadata -->
+  <!-- SEO -->
   <title>{meta.title}</title>
   <meta name="title" content={meta.metaTitle} />
   <meta name="description" content={meta.description} />
 
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph -->
   <meta property="og:type" content={meta.type} />
-  <meta property="og:url" content={canonicalURL} />
+  {canonicalURL && <meta property="og:url" content={canonicalURL} />}
   <meta property="og:title" content={meta.metaTitle} />
   <meta property="og:description" content={meta.description} />
-  <meta property="og:image" content={OGImage} />
-  <meta property="og:image:alt" content={meta.ogImageAlt} />
+  {OGImage && <meta property="og:image" content={OGImage} />}
+  {
+    meta.ogImageAlt && (
+      <meta property="og:image:alt" content={meta.ogImageAlt} />
+    )
+  }
 
   <!-- Twitter -->
-  <meta property="twitter:site" content={Astro.site} />
   <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content={canonicalURL} />
+  {canonicalURL && <meta property="twitter:url" content={canonicalURL} />}
   <meta property="twitter:title" content={meta.metaTitle} />
   <meta property="twitter:description" content={meta.description} />
-  <meta property="twitter:image" content={OGImage} />
-  <meta property="twitter:image:alt" content={meta.ogImageAlt} />
-
+  {OGImage && <meta property="twitter:image" content={OGImage} />}
   {
-    isArticleMeta(meta) ? (
+    meta.ogImageAlt && (
+      <meta property="twitter:image:alt" content={meta.ogImageAlt} />
+    )
+  }
+
+  <!-- Article Meta -->
+  {
+    isArticleMeta(meta) && (
       <>
         <meta
           property="article:published_time"
@@ -81,6 +99,6 @@ const OGImage = new URL(meta.ogImage, Astro.url).href;
           content={new Date(meta.lastModified).toISOString()}
         />
       </>
-    ) : null
+    )
   }
 </head>
