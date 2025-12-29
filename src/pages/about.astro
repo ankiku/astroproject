@@ -1,9 +1,11 @@
 ---
+export const prerender = false;
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { getSiteFromRequest } from "@/lib/siteConfig";
+import { getRuntimeSite } from "@/lib/siteConfig";
 
-const site = getSiteFromRequest(Astro.request);
+const site = getRuntimeSite(Astro.request);
+
 const entry = {
   data: {
     title: "About Us",
@@ -16,17 +18,18 @@ const entry = {
   <ContentLayout>
     <article class="prose mx-auto">
       <h1>About Us</h1>
+
       <p>
-        Welcome to <strong> {site.title}</strong> — your trusted platform for authentic
+        Welcome to <strong>{site.title}</strong> — your trusted platform for authentic
         stories, meaningful insights, and thoughtful perspectives on sustainable living,
         culture, and design.
       </p>
 
       <p>
-        At {site.origin}, we’re committed to bringing you accurate, unbiased,
-        and timely coverage of the topics that shape our world—from the latest
-        trends in eco-friendly wrapping and design to deeper cultural narratives
-        and social change.
+        At <strong>{site.title}</strong>, we’re committed to bringing you
+        accurate, unbiased, and timely coverage of the topics that shape our
+        world—from the latest trends in eco-friendly wrapping and design to
+        deeper cultural narratives and social change.
       </p>
 
       <p>
@@ -42,13 +45,9 @@ const entry = {
 
       <ul class="wp-block-list">
         <li>Eco-design &amp; Sustainability</li>
-
         <li>Cultural &amp; Craft Traditions</li>
-
         <li>Lifestyle &amp; Gift Trends</li>
-
         <li>Business &amp; Innovation in Design</li>
-
         <li>Local, National &amp; International Affairs</li>
       </ul>
 
@@ -59,8 +58,9 @@ const entry = {
       </p>
 
       <p>
-        Thank you for choosing {site.origin} as your trusted source.<br
-        /><strong>Stay curious. Stay informed. Stay connected.</strong>
+        Thank you for choosing <strong>{site.title}</strong> as your trusted source.<br
+        />
+        <strong>Stay curious. Stay informed. Stay connected.</strong>
       </p>
     </article>
   </ContentLayout>

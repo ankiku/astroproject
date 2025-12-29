@@ -1,11 +1,13 @@
 ---
+export const prerender = false;
+
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { getSiteFromRequest } from "@/lib/siteConfig";
+import { getRuntimeSite } from "@/lib/siteConfig";
 
-const site = getSiteFromRequest(Astro.request);
+const site = getRuntimeSite(Astro.request);
 
-/* ---------- SEO ENTRY ---------- */
+/* ---------- SEO ---------- */
 const entry = {
   data: {
     title: "Contact Us",
@@ -13,10 +15,11 @@ const entry = {
   },
 };
 
-/* ---------- CONTACT VALUES ---------- */
-const email = site.hostname ? `info@${site.hostname}` : "info@example.com";
+/* ---------- CONTACT INFO ---------- */
+const email = site.contactEmail || "info@example.com";
 
-const siteUrl = site.origin;
+/* ✅ ALWAYS AVAILABLE WEBSITE */
+const website = site.publicUrl || site.origin || "";
 ---
 
 <BaseLayout entry={entry}>
@@ -31,14 +34,20 @@ const siteUrl = site.origin;
 
       <ul>
         <li>
-          <strong>Email:</strong>{" "}
+          <strong>Email:</strong>
           <a href={`mailto:${email}`}>{email}</a>
         </li>
 
-        <li>
-          <strong>Website:</strong>{" "}
-          <a href={siteUrl}>{siteUrl}</a>
-        </li>
+        {
+          website && (
+            <li>
+              <strong>Website:</strong>
+              <a href={website} target="_blank" rel="noopener noreferrer">
+                {website}
+              </a>
+            </li>
+          )
+        }
       </ul>
 
       <p>

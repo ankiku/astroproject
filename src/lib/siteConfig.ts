@@ -1,112 +1,104 @@
+/* =========================================================
+   SITE CONFIG (Single Source of Truth)
+   ========================================================= */
+
 export type SiteConfig = {
   title: string;
   shortTitle?: string;
   analyticsId?: string;
+  publicUrl?: string;
+  contactEmail?: string;
 };
 
-/* ---------- DOMAIN CONFIG ---------- */
+/* ---------------------------------------------------------
+   DOMAIN CONFIG
+   --------------------------------------------------------- */
 export const siteConfig: Record<string, SiteConfig> = {
-  /* ===== Germany Finanz ===== */
+  "astro.local:4321": {
+    title: "Astro News",
+    shortTitle: "Astro",
+    analyticsId: "G-AAAAAAA",
+    publicUrl: "https://www.astro.news",
+    contactEmail: "info@astro.news",
+  },
+
   "germanyfinanz.news": {
     title: "Germany Finanz News",
     shortTitle: "Germany Finanz",
     analyticsId: "G-AAAAAAA",
-  },
-  "www.germanyfinanz.news": {
-    title: "Germany Finanz News",
-    shortTitle: "Germany Finanz",
-    analyticsId: "G-AAAAAAA",
+    publicUrl: "https://www.germanyfinanz.news",
+    contactEmail: "info@germanyfinanz.news",
   },
 
-  /* ===== Astro Local ===== */
-  "astro.local": {
-    title: "Astro Local News",
-    shortTitle: "Astro News",
-    analyticsId: "G-BBBBBBB",
-  },
-
-  /* ===== Buschow Henley ===== */
   "buschowhenley.co.uk": {
     title: "Buschow Henley",
     shortTitle: "Buschow",
-    analyticsId: "G-CCCCCCC", // 🔁 replace if different
-  },
-  "www.buschowhenley.co.uk": {
-    title: "Buschow Henley",
-    shortTitle: "Buschow",
-    analyticsId: "G-CCCCCCC",
+    publicUrl: "https://www.buschowhenley.co.uk",
+    contactEmail: "info@buschowhenley.co.uk",
   },
 
-  /* ===== Pacifica Day Spa ===== */
   "pacificadayspa.co.uk": {
     title: "Pacifica Day Spa",
     shortTitle: "Pacifica Spa",
-    analyticsId: "G-DDDDDDD", // 🔁 replace if different
-  },
-  "www.pacificadayspa.co.uk": {
-    title: "Pacifica Day Spa",
-    shortTitle: "Pacifica Spa",
-    analyticsId: "G-DDDDDDD",
+    publicUrl: "https://www.pacificadayspa.co.uk",
+    contactEmail: "info@pacificadayspa.co.uk",
   },
 
-  /* ===== The Garden Cafe Cambridge ===== */
   "thegardencafecambridge.co.uk": {
     title: "The Garden Cafe Cambridge",
     shortTitle: "The Garden Cafe",
-    analyticsId: "G-EEEEEEE", // 🔁 replace if different
-  },
-  "www.thegardencafecambridge.co.uk": {
-    title: "The Garden Cafe Cambridge",
-    shortTitle: "The Garden Cafe",
-    analyticsId: "G-EEEEEEE",
+    publicUrl: "https://www.thegardencafecambridge.co.uk",
+    contactEmail: "info@thegardencafecambridge.co.uk",
   },
 };
 
-/* ---------- SAFE SITE RESOLVER ---------- */
-export function getSiteFromRequest(request?: Request) {
-  try {
-    if (!request) {
-      return {
-        title: "News",
-        origin: "",
-        hostname: "",
-      };
-    }
+/* ---------------------------------------------------------
+   STATIC SAFE (NO REQUEST)
+   --------------------------------------------------------- */
+export function getStaticSite(hostname = ""): SiteConfig {
+  const clean = hostname.replace(/^www\./, "");
 
-    const url = new URL(request.url);
-
-    // ✅ REAL HOST (works on CF Pages + Workers)
-    const host =
-      request.headers.get("x-forwarded-host") ||
-      request.headers.get("host") ||
-      url.hostname;
-
-    const hostname = host.replace(/^www\./, "");
-
-    // ✅ REAL PROTOCOL (fixes http://localhost issue)
-    const protocol =
-      request.headers.get("cf-connecting-proto") ||
-      request.headers.get("x-forwarded-proto") ||
-      url.protocol.replace(":", "");
-
-    const origin = `${protocol}://${host}`;
-
-    const site =
-      siteConfig[host] ||
-      siteConfig[hostname] || {
-        title: "News",
-      };
-
-    return {
-      ...site,
-      origin,
-      hostname,
-    };
-  } catch {
-    return {
+  return (
+    siteConfig[clean] || {
       title: "News",
-      origin: "",
-      hostname: "",
-    };
+      shortTitle: "News",
+    }
+  );
+}
+
+/* ---------------------------------------------------------
+   RUNTIME HELPER (SSR ONLY)
+   --------------------------------------------------------- */
+export function getRuntimeSite(request?: Request) {
+  // ❗ DEV / BUILD / HMR SAFE GUARD
+  if (!request || !request.url) {
+    return getStaticSite();
   }
+
+  let url: URL;
+
+  try {
+    url = new URL(request.url);
+  } catch {
+    // 🚑 Prevents "Invalid URL" crash
+    return getStaticSite();
+  }
+
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    url.hostname;
+
+  const protocol =
+    request.headers.get("cf-connecting-proto") ||
+    request.headers.get("x-forwarded-proto") ||
+    url.protocol.replace(":", "");
+
+  const site = getStaticSite(host);
+
+  return {
+    ...site,
+    hostname: host.replace(/^www\./, ""),
+    origin: `${protocol}://${host}`,
+  };
 }

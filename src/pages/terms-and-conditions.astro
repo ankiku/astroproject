@@ -1,14 +1,15 @@
 ---
+export const prerender = false;
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { getSiteFromRequest } from "@/lib/siteConfig";
+import { getRuntimeSite } from "@/lib/siteConfig";
 
-const site = getSiteFromRequest(Astro.request);
+const site = getRuntimeSite(Astro.request);
 
 const entry = {
   data: {
     title: "Terms and Conditions",
-    description: `Terms and conditions for using ${site.title}`,
+    description: `Terms and conditions for ${site.title}`,
   },
 };
 ---
