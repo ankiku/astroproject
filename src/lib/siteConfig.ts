@@ -4,6 +4,7 @@ export type SiteConfig = {
   analyticsId?: string;
 };
 
+/* ---------- DOMAIN CONFIG ---------- */
 export const siteConfig: Record<string, SiteConfig> = {
   "germanyfinanz.news": {
     title: "Germany Finanz News",
@@ -23,3 +24,36 @@ export const siteConfig: Record<string, SiteConfig> = {
     analyticsId: "G-CCCCCCC",
   },
 };
+
+/* ---------- SAFE SITE RESOLVER ---------- */
+export function getSiteFromRequest(request?: Request) {
+  try {
+    if (!request) {
+      return {
+        title: "News",
+        origin: "",
+      };
+    }
+
+    const url = new URL(request.url);
+    const rawHost = url.hostname;
+    const hostname = rawHost.replace(/^www\./, "");
+
+    const site =
+      siteConfig[rawHost] ||
+      siteConfig[hostname] || {
+        title: "News",
+      };
+
+    return {
+      ...site,
+      origin: url.origin,   // ✅ THIS IS WHAT YOU NEED
+      hostname,
+    };
+  } catch {
+    return {
+      title: "News",
+      origin: "",
+    };
+  }
+}

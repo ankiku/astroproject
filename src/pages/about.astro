@@ -1,20 +1,9 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { siteConfig } from "@/lib/siteConfig";
+import { getSiteFromRequest } from "@/lib/siteConfig";
 
-/* ---------- DOMAIN ---------- */
-const url = Astro.request ? new URL(Astro.request.url) : null;
-const rawHost = url?.hostname || "";
-const hostname = rawHost.replace(/^www\./, "");
-
-/* ---------- SITE CONFIG ---------- */
-const site = siteConfig[rawHost] ||
-  siteConfig[hostname] || {
-    title: "News",
-  };
-
-/* ---------- ENTRY FOR SEO ---------- */
+const site = getSiteFromRequest(Astro.request);
 const entry = {
   data: {
     title: "About Us",
@@ -28,16 +17,16 @@ const entry = {
     <article class="prose mx-auto">
       <h1>About Us</h1>
       <p>
-        Welcome to <strong> {rawHost}</strong> — your trusted platform for authentic
+        Welcome to <strong> {site.title}</strong> — your trusted platform for authentic
         stories, meaningful insights, and thoughtful perspectives on sustainable living,
         culture, and design.
       </p>
 
       <p>
-        At furoshiki-giftwrap.co.uk, we’re committed to bringing you accurate,
-        unbiased, and timely coverage of the topics that shape our world—from
-        the latest trends in eco-friendly wrapping and design to deeper cultural
-        narratives and social change.
+        At {site.origin}, we’re committed to bringing you accurate, unbiased,
+        and timely coverage of the topics that shape our world—from the latest
+        trends in eco-friendly wrapping and design to deeper cultural narratives
+        and social change.
       </p>
 
       <p>
@@ -70,7 +59,7 @@ const entry = {
       </p>
 
       <p>
-        Thank you for choosing furoshiki-giftwrap.co.uk as your trusted source.<br
+        Thank you for choosing {site.origin} as your trusted source.<br
         /><strong>Stay curious. Stay informed. Stay connected.</strong>
       </p>
     </article>

@@ -3,12 +3,22 @@ export const prerender = false;
 
 import BaseLayout from "@/layouts/base.astro";
 import LatestNews from "@/pages/_home/latestNews.astro";
+import { siteConfig } from "@/lib/siteConfig";
+
+/* ---------- DOMAIN ---------- */
+const url = Astro.request ? new URL(Astro.request.url) : null;
+const rawHost = url?.hostname || "";
+const hostname = rawHost.replace(/^www\./, "");
+const site = siteConfig[rawHost] ||
+  siteConfig[hostname] || {
+    title: "News",
+  };
 
 /* ✅ SAFE fallback entry for layout SEO */
 const entry = {
   data: {
-    title: "Germany Finanz – Latest News",
-    description: "Latest financial and economic news from Germany",
+    title: `${site.title} – Latest News`,
+    description: `Latest financial and economic news from ${site.title}`,
   },
 };
 ---

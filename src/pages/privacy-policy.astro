@@ -3,14 +3,9 @@ export const prerender = false;
 
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { siteConfig } from "@/lib/siteConfig";
+import { getSiteFromRequest } from "@/lib/siteConfig";
 
-/* ---------- DOMAIN ---------- */
-const url = Astro.request ? new URL(Astro.request.url) : null;
-const rawHost = url?.hostname || "";
-const site = siteConfig[rawHost];
-
-/* ---------- ENTRY FOR SEO ---------- */
+const site = getSiteFromRequest(Astro.request);
 const entry = {
   data: {
     title: "Privacy Policy",
@@ -26,7 +21,7 @@ const entry = {
       <h2 class="wp-block-heading">Who we are</h2>
       <p>
         <strong class="privacy-policy-tutorial">Suggested text: </strong>Our
-        website address is: {url}.
+        website address is: {site.origin}.
       </p>
 
       <h2 class="wp-block-heading">Comments</h2>

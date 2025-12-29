@@ -1,18 +1,9 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { siteConfig } from "@/lib/siteConfig";
+import { getSiteFromRequest } from "@/lib/siteConfig";
 
-/* ---------- DOMAIN ---------- */
-const urlObj = Astro.request ? new URL(Astro.request.url) : null;
-const rawHost = urlObj?.hostname || "";
-const hostname = rawHost.replace(/^www\./, "");
-
-/* ---------- SITE CONFIG ---------- */
-const site = siteConfig[rawHost] ||
-  siteConfig[hostname] || {
-    title: "News",
-  };
+const site = getSiteFromRequest(Astro.request);
 
 /* ---------- SEO ENTRY ---------- */
 const entry = {
@@ -23,8 +14,9 @@ const entry = {
 };
 
 /* ---------- CONTACT VALUES ---------- */
-const email = `info@${hostname}`;
-const siteUrl = urlObj ? urlObj.origin : "";
+const email = site.hostname ? `info@${site.hostname}` : "info@example.com";
+
+const siteUrl = site.origin;
 ---
 
 <BaseLayout entry={entry}>
@@ -39,12 +31,12 @@ const siteUrl = urlObj ? urlObj.origin : "";
 
       <ul>
         <li>
-          <strong>Email:</strong>
+          <strong>Email:</strong>{" "}
           <a href={`mailto:${email}`}>{email}</a>
         </li>
 
         <li>
-          <strong>Website:</strong>
+          <strong>Website:</strong>{" "}
           <a href={siteUrl}>{siteUrl}</a>
         </li>
       </ul>

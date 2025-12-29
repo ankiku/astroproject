@@ -1,13 +1,9 @@
 ---
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
-import { siteConfig } from "@/lib/siteConfig";
+import { getSiteFromRequest } from "@/lib/siteConfig";
 
-/* ---------- DOMAIN ---------- */
-const url = Astro.request ? new URL(Astro.request.url) : null;
-const rawHost = url?.hostname || "";
-const hostname = rawHost.replace(/^www\./, "");
-const site = siteConfig[rawHost];
+const site = getSiteFromRequest(Astro.request);
 
 const entry = {
   data: {
@@ -22,8 +18,8 @@ const entry = {
     <article class="prose mx-auto">
       <h1>Terms and Conditions</h1>
       <p>
-        Welcome to {hostname}. By accessing or using this website, you agree to
-        be bound by the following terms and conditions. If you do not agree,
+        Welcome to {site.title}. By accessing or using this website, you agree
+        to be bound by the following terms and conditions. If you do not agree,
         please do not use this site.
       </p>
 
@@ -37,7 +33,7 @@ const entry = {
       <h3 class="wp-block-heading">2. Content Use</h3>
 
       <p>
-        All content on {hostname} — including articles, images, graphics, and videos
+        All content on {site.title} — including articles, images, graphics, and videos
         — is protected by copyright. You may not copy, reproduce, republish or distribute
         any material without prior written permission.
       </p>
@@ -69,7 +65,7 @@ const entry = {
       <h3 class="wp-block-heading">6. Limitation of Liability</h3>
 
       <p>
-        {hostname} and its team will not be liable for any loss or damage arising
+        {site.title} and its team will not be liable for any loss or damage arising
         from your use of the site or reliance on its content.
       </p>
 
