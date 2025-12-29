@@ -1,27 +1,42 @@
 export const prerender = false;
 
-export async function GET({ request, site }) {
-  const base =
-    site?.toString().replace(/\/$/, "") ||
-    "https://www.germanyfinanz.news";
+/* ✅ Base URL for sitemap output (multi-domain safe) */
+function getBaseURL(request: Request) {
+  const host = request.headers.get("host");
 
-  let host = request.headers.get("host") || "";
-
-  if (
-    host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.includes("astro.local")
-  ) {
-    host = "www.germanyfinanz.news";
+  // Local dev fallback
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "http://localhost:4321";
   }
 
-  const API_URL = `https://calcstatetax.com/api/news/?site=https://${host}`;
+  return `https://${host}`;
+}
+
+/* ✅ Site key for Django API */
+function getApiSite(request: Request) {
+  const host = request.headers.get("host");
+
+  // Local dev → use registered site
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "https://www.germanyfinanz.news";
+  }
+
+  // Production → actual domain
+  return `https://${host}`;
+}
+
+export async function GET({ request }) {
+  const base = getBaseURL(request);
+  const apiSite = getApiSite(request);
+
+  const API_URL = `https://calcstatetax.com/api/news/?site=${apiSite}`;
 
   const res = await fetch(API_URL, {
     headers: { Accept: "application/json" },
   });
 
   if (!res.ok) {
+    console.error("News API failed:", API_URL, res.status);
     return new Response("Failed to generate sitemap-news", { status: 500 });
   }
 
@@ -29,6 +44,7 @@ export async function GET({ request, site }) {
   const articles = data.articles || [];
 
   const entries = articles
+    .filter((a) => a.slug)
     .map((article) => {
       const lastmod = article.created_at
         ? new Date(article.created_at).toISOString()

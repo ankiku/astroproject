@@ -1,10 +1,19 @@
 export const prerender = false; // SSR
 
-export async function GET({ request, site }) {
-  const base =
-    site?.toString().replace(/\/$/, "") ||
-    "https://www.germanyfinanz.news";
+function getBaseURL(request: Request) {
+  const host = request.headers.get("host");
 
+  // Local dev fallback ONLY
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "http://localhost:4321";
+  }
+
+  // Production: trust the incoming domain
+  return `https://${host}`;
+}
+
+export async function GET({ request }) {
+  const base = getBaseURL(request);
   const now = new Date().toISOString();
 
   return new Response(
@@ -19,6 +28,11 @@ export async function GET({ request, site }) {
 
   <sitemap>
     <loc>${base}/sitemap-news.xml</loc>
+    <lastmod>${now}</lastmod>
+  </sitemap>
+
+  <sitemap>
+    <loc>${base}/sitemap-google-news.xml</loc>
     <lastmod>${now}</lastmod>
   </sitemap>
 

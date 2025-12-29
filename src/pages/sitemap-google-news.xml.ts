@@ -1,27 +1,41 @@
 export const prerender = false;
 
-export async function GET({ request, site }) {
-  const base =
-    site?.toString().replace(/\/$/, "") ||
-    "https://www.germanyfinanz.news";
+/* ✅ Base URL for sitemap output */
+function getBaseURL(request: Request) {
+  const host = request.headers.get("host");
 
-  let host = request.headers.get("host") || "";
-
-  if (
-    host.includes("localhost") ||
-    host.includes("127.0.0.1") ||
-    host.includes("astro.local")
-  ) {
-    host = "www.germanyfinanz.news";
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "http://localhost:4321";
   }
 
-  const API_URL = `https://calcstatetax.com/api/news/?site=https://${host}`;
+  return `https://${host}`;
+}
+
+/* ✅ Site key for Django API */
+function getApiSite(request: Request) {
+  const host = request.headers.get("host");
+
+  // Local dev → use known registered site
+  if (!host || host.includes("localhost") || host.includes("127.0.0.1")) {
+    return "https://www.germanyfinanz.news";
+  }
+
+  // Production → actual domain
+  return `https://${host}`;
+}
+
+export async function GET({ request }) {
+  const base = getBaseURL(request);
+  const apiSite = getApiSite(request);
+
+  const API_URL = `https://calcstatetax.com/api/news/?site=${apiSite}`;
 
   const res = await fetch(API_URL, {
     headers: { Accept: "application/json" },
   });
 
   if (!res.ok) {
+    console.error("News API failed:", API_URL, res.status);
     return new Response("Failed to generate Google News sitemap", {
       status: 500,
     });
@@ -30,13 +44,15 @@ export async function GET({ request, site }) {
   const data = await res.json();
   const articles = data.articles || [];
 
-  /* 🔧 TEST MODE: last 30 days (change to 48h for production) */
+  /* 🔧 TEST MODE: last 30 days */
   const now = new Date();
-  const twoDaysAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(
+    now.getTime() - 30 * 24 * 60 * 60 * 1000
+  );
 
   const entries = articles
-    .filter((a) => a.created_at)
-    .filter((a) => new Date(a.created_at) >= twoDaysAgo)
+    .filter((a) => a.created_at && a.slug && a.title)
+    .filter((a) => new Date(a.created_at) >= thirtyDaysAgo)
     .slice(0, 1000)
     .map((article) => {
       const pubDate = new Date(article.created_at).toISOString();
@@ -65,8 +81,6 @@ export async function GET({ request, site }) {
 >
 ${entries}
 </urlset>`,
-    {
-      headers: { "Content-Type": "application/xml" },
-    }
+    { headers: { "Content-Type": "application/xml" } }
   );
 }
