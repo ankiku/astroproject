@@ -15,9 +15,15 @@ const { meta } = Astro.props;
 
 /* ---------- URL ---------- */
 const url = Astro.request ? new URL(Astro.request.url) : null;
-const origin = url ? url.origin : "";
-const pathname = url ? url.pathname : "";
-const canonicalURL = origin && pathname ? `${origin}${pathname}` : "";
+const origin = url?.origin || "";
+const pathname = url?.pathname || "/";
+const page = Number(url?.searchParams.get("page") || 1);
+
+const canonicalURL = origin
+  ? page > 1
+    ? `${origin}${pathname}?page=${page}`
+    : `${origin}${pathname}`
+  : "";
 
 /* ---------- OG IMAGE ---------- */
 const OGImage =

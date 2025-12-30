@@ -2,11 +2,16 @@
 import NewsCard from "@/components/cards/newsCard.astro";
 import HeaderSection from "./headerSection.astro";
 
+/* ---------- PAGINATION ---------- */
+const { page = 1, limit = 9 } = Astro.props;
+const currentPage = Number.isFinite(Number(page)) ? Number(page) : 1;
+
+/* ---------- WORKER ---------- */
 const WORKER_URL =
   "https://news-cache-worker.ankitnav1998.workers.dev/news-cache";
 
-let site = Astro.request.headers.get("host");
-
+/* ---------- DOMAIN ---------- */
+let site = Astro.request?.headers.get("host") || "";
 if (
   !site ||
   site.includes("localhost") ||
@@ -16,22 +21,18 @@ if (
   site = "www.germanyfinanz.news";
 }
 
-const res = await fetch(`${WORKER_URL}?site=${encodeURIComponent(site)}`, {
-  headers: { Accept: "application/json" },
-});
+/* ---------- FETCH ---------- */
+const res = await fetch(
+  `${WORKER_URL}?site=${encodeURIComponent(site)}&page=${currentPage}&limit=${limit}`,
+  { headers: { Accept: "application/json" } },
+);
 
 const data = res.ok ? await res.json() : {};
+const articles = data.articles || [];
+const totalPages = Number(data.total_pages || 1);
 
-const articles = (data.articles || []).map((item) => ({
-  title: item.title,
-  slug: item.slug,
-  description: item.content.replace(/<[^>]+>/g, "").slice(0, 160) + "...",
-  cover: item.featured_image,
-  publishedAt: item.created_at,
-}));
-
-/* ✅ LCP HERO IMAGE (FIRST CARD ONLY) */
-const heroImage = articles[0]?.cover || null;
+/* ---------- LCP (PAGE 1 ONLY) ---------- */
+const heroImage = currentPage === 1 ? articles[0]?.featured_image : null;
 ---
 
 {
@@ -43,17 +44,136 @@ const heroImage = articles[0]?.cover || null;
 <section>
   <HeaderSection title="Latest News" />
 
-  {
-    articles.length === 0 && (
-      <p class="text-center text-gray-500 mt-10">No news available</p>
-    )
-  }
-
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <!-- ARTICLES -->
+  <div
+    id="articles-container"
+    class="grid grid-cols-1 md:grid-cols-3 gap-6"
+    data-page={currentPage}
+    data-total-pages={totalPages}
+  >
     {
       articles.map((article, index) => (
-        <NewsCard article={article} index={index} />
+        <NewsCard
+          article={{
+            title: article.title,
+            slug: article.slug,
+            description:
+              article.content.replace(/<[^>]+>/g, "").slice(0, 160) + "...",
+            cover: article.featured_image,
+          }}
+          index={index}
+        />
       ))
     }
   </div>
+
+  <!-- SENTINEL -->
+  <div id="infinite-scroll-sentinel" style="height: 200px"></div>
+
+  <!-- LOADING SPINNER -->
+  <div
+    id="loading-spinner"
+    class="flex justify-center items-center py-10 hidden"
+    aria-hidden="true"
+  >
+    <svg
+      class="animate-spin h-8 w-8 text-gray-400"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <circle
+        class="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        stroke-width="4"></circle>
+      <path
+        class="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+  </div>
+
+  <!-- SEO PAGINATION FALLBACK -->
+  {
+    totalPages > 1 && (
+      <nav id="pagination" class="flex justify-center gap-4 mt-10">
+        {currentPage > 1 && (
+          <a href={`/?page=${currentPage - 1}`}>← Previous</a>
+        )}
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        {currentPage < totalPages && (
+          <a href={`/?page=${currentPage + 1}`}>Next →</a>
+        )}
+      </nav>
+    )
+  }
 </section>
+
+<!-- ================= INFINITE SCROLL SCRIPT ================= -->
+<script is:inline>
+  (() => {
+    const container = document.getElementById("articles-container");
+    const sentinel = document.getElementById("infinite-scroll-sentinel");
+    const pagination = document.getElementById("pagination");
+    const spinner = document.getElementById("loading-spinner");
+
+    if (!container || !sentinel) return;
+
+    let currentPage = Number(container.dataset.page);
+    const totalPages = Number(container.dataset.totalPages);
+    let loading = false;
+
+    const loadNextPage = async () => {
+      if (loading || currentPage >= totalPages) return;
+
+      loading = true;
+      spinner?.classList.remove("hidden");
+      currentPage++;
+
+      try {
+        const res = await fetch(`/?page=${currentPage}`);
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const newItems = doc.querySelectorAll("#articles-container > *");
+        newItems.forEach((el) => container.appendChild(el));
+
+        container.dataset.page = currentPage;
+        history.pushState(null, "", `/?page=${currentPage}`);
+
+        if (currentPage >= totalPages && pagination) {
+          pagination.remove();
+        }
+      } catch (err) {
+        console.error("Infinite scroll error", err);
+      }
+
+      spinner?.classList.add("hidden");
+      loading = false;
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadNextPage();
+      },
+      { rootMargin: "800px" },
+    );
+
+    observer.observe(sentinel);
+
+    // Backup scroll trigger
+    window.addEventListener("scroll", () => {
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 500
+      ) {
+        loadNextPage();
+      }
+    });
+  })();
+</script>

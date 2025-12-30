@@ -3,41 +3,55 @@ export const prerender = false;
 
 import BaseLayout from "@/layouts/base.astro";
 import ContentLayout from "@/layouts/content.astro";
+import NewsCard from "@/components/cards/newsCard.astro";
 
 const { slug } = Astro.params;
 
-const WORKER_URL =
-  "https://news-cache-worker.ankitnav1998.workers.dev/news-slug";
+/* ---------- WORKER ---------- */
+const WORKER_URL = "https://news-cache-worker.ankitnav1998.workers.dev";
+
+/* ---------- DOMAIN ---------- */
+let site = Astro.request?.headers.get("host") || "";
+if (
+  !site ||
+  site.includes("localhost") ||
+  site.includes("127.0.0.1") ||
+  site.includes("astro.local")
+) {
+  site = "www.germanyfinanz.news";
+}
 
 /* ---------- FETCH ARTICLE ---------- */
-const res = await fetch(`${WORKER_URL}?slug=${encodeURIComponent(slug)}`, {
-  headers: { Accept: "application/json" },
-});
+const articleRes = await fetch(
+  `${WORKER_URL}/news-slug?slug=${encodeURIComponent(slug)}`,
+  { headers: { Accept: "application/json" } },
+);
 
-if (!res.ok) {
-  return Astro.redirect("/404");
-}
+if (!articleRes.ok) return Astro.redirect("/404");
 
-const article = await res.json();
+const article = await articleRes.json();
+if (!article?.slug) return Astro.redirect("/404");
 
-if (!article || !article.slug) {
-  return Astro.redirect("/404");
-}
-
-/* ---------- META DESCRIPTION (25 WORDS FROM CONTENT) ---------- */
+/* ---------- META DESCRIPTION (25 WORDS) ---------- */
 const stripHtml = (html = "") =>
   html
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-const getMetaDescription = (html = "", words = 25) => {
-  const text = stripHtml(html);
-  if (!text) return article.title;
-  return text.split(" ").slice(0, words).join(" ");
-};
+const metaDescription =
+  stripHtml(article.content).split(" ").slice(0, 25).join(" ") || article.title;
 
-const metaDescription = getMetaDescription(article.content, 25);
+/* ---------- FETCH LATEST NEWS ---------- */
+const latestRes = await fetch(
+  `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=6`,
+  { headers: { Accept: "application/json" } },
+);
+
+const latestData = latestRes.ok ? await latestRes.json() : {};
+const latestArticles = (latestData.articles || [])
+  .filter((item) => item.slug !== slug)
+  .slice(0, 3);
 
 /* ---------- ENTRY FOR HEAD ---------- */
 const entry = {
@@ -57,6 +71,7 @@ const entry = {
 
 <BaseLayout entry={entry}>
   <ContentLayout>
+    <!-- ARTICLE -->
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
 
@@ -73,5 +88,28 @@ const entry = {
 
       <div class="mt-6" set:html={article.content} />
     </article>
+
+    <!-- RECENT / LATEST NEWS -->
+    {
+      latestArticles.length > 0 && (
+        <section class="mt-16 border-t pt-10">
+          <h2 class="text-2xl font-bold mb-6">Latest News</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {latestArticles.map((item, index) => (
+              <NewsCard
+                article={{
+                  title: item.title,
+                  slug: item.slug,
+                  description: stripHtml(item.content).slice(0, 140) + "...",
+                  cover: item.featured_image,
+                }}
+                index={index}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
   </ContentLayout>
 </BaseLayout>

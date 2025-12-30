@@ -9,20 +9,24 @@ import { siteConfig } from "@/lib/siteConfig";
 const url = Astro.request ? new URL(Astro.request.url) : null;
 const rawHost = url?.hostname || "";
 const hostname = rawHost.replace(/^www\./, "");
-const site = siteConfig[rawHost] ||
-  siteConfig[hostname] || {
-    title: "News",
-  };
+const site = siteConfig[rawHost] || siteConfig[hostname] || { title: "News" };
 
-/* ✅ SAFE fallback entry for layout SEO */
+/* ---------- PAGINATION ---------- */
+const page = Number(url?.searchParams.get("page") || 1);
+const limit = 3;
+
+/* ---------- SEO ---------- */
 const entry = {
   data: {
-    title: `${site.title} – Latest News`,
-    description: `Latest financial and economic news from ${site.title}`,
+    title:
+      page > 1
+        ? `${site.title} – Latest News (Page ${page})`
+        : `${site.title} – Latest News`,
+    description: `Latest news from ${site.title}`,
   },
 };
 ---
 
 <BaseLayout entry={entry}>
-  <LatestNews />
+  <LatestNews page={page} limit={limit} />
 </BaseLayout>
