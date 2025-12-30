@@ -5,29 +5,34 @@ import BaseLayout from "@/layouts/base.astro";
 import LatestNews from "@/pages/_home/latestNews.astro";
 import { siteConfig } from "@/lib/siteConfig";
 
-/* ---------- DOMAIN (SINGLE SOURCE OF TRUTH) ---------- */
+const { page } = Astro.params;
+const pageNumber = Number(page);
+
+if (!pageNumber || pageNumber < 2) {
+  return Astro.redirect("/");
+}
+
+const limit = 9;
+
+/* ---------- SAME DOMAIN LOGIC AS HOME ---------- */
 const url = Astro.request ? new URL(Astro.request.url) : null;
 let site = url?.hostname || "";
 site = site.replace(/^www\./, "");
 
 if (!site || site.includes("localhost") || site.includes("astro.local")) {
-  site = "www.germanyfinanz.news";
+  site = "germanyfinanz.news";
 }
 
 const siteData = siteConfig[site] || { title: "News" };
 
-const page = 1;
-const limit = 9;
-
-/* ---------- SEO ---------- */
 const entry = {
   data: {
-    title: `${siteData.title} – Latest News`,
-    description: `Latest news from ${siteData.title}`,
+    title: `${siteData.title} – Page ${pageNumber}`,
+    description: `Latest news from ${siteData.title}, page ${pageNumber}`,
   },
 };
 ---
 
 <BaseLayout entry={entry}>
-  <LatestNews site={site} page={page} limit={limit} />
+  <LatestNews site={site} page={pageNumber} limit={limit} />
 </BaseLayout>
