@@ -33,6 +33,7 @@ export const siteConfig: Record<string, SiteConfig> = {
   "buschowhenley.co.uk": {
     title: "Buschow Henley",
     shortTitle: "Buschow",
+    analyticsId: "G-KPZ63HRB00",
     publicUrl: "https://www.buschowhenley.co.uk",
     contactEmail: "info@buschowhenley.co.uk",
   },
@@ -40,6 +41,7 @@ export const siteConfig: Record<string, SiteConfig> = {
   "pacificadayspa.co.uk": {
     title: "Pacifica Day Spa",
     shortTitle: "Pacifica Spa",
+    analyticsId: "G-NKTWXXQV4N",
     publicUrl: "https://www.pacificadayspa.co.uk",
     contactEmail: "info@pacificadayspa.co.uk",
   },
@@ -47,6 +49,7 @@ export const siteConfig: Record<string, SiteConfig> = {
   "thegardencafecambridge.co.uk": {
     title: "The Garden Cafe Cambridge",
     shortTitle: "The Garden Cafe",
+    analyticsId: "G-T2SGVT50KX",
     publicUrl: "https://www.thegardencafecambridge.co.uk",
     contactEmail: "info@thegardencafecambridge.co.uk",
   },
