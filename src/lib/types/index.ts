@@ -15,11 +15,6 @@ export type Link = {
   target?: "_blank" | "_self";
 };
 
-type Author = {
-  name: string;
-  link: string;
-};
-
 export type Meta = {
   title: string;
   metaTitle: string;
@@ -32,7 +27,6 @@ export type Meta = {
 export type ArticleMeta = Meta & {
   publishedTime: string;
   lastModified: string;
-  authors: Author[];
 };
 
 export type Entry = CollectionEntry<"articles" | "views">;

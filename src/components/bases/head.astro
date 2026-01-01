@@ -62,7 +62,7 @@ const breadcrumbSchema = canonicalURL
   : null;
 
 const articleSchema =
-  isArticleMeta(meta) && canonicalURL
+  meta.type === "article" && canonicalURL
     ? JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Article",
@@ -75,14 +75,9 @@ const articleSchema =
         image: OGImage ? [OGImage] : [],
         datePublished: meta.publishedTime,
         dateModified: meta.lastModified,
-        author: meta.authors.map((a) => ({
-          "@type": "Person",
-          name: a.name,
-          url: a.link,
-        })),
         publisher: {
           "@type": "Organization",
-          name: "Your Site Name",
+          name: site?.name || "Your Site Name",
           logo: {
             "@type": "ImageObject",
             url: `${origin}/favicon-96x96.png`,
@@ -119,8 +114,9 @@ gtag('config', '${GA_ID}');
   <!-- OPEN GRAPH -->
   <meta
     property="og:type"
-    content={isArticleMeta(meta) ? "article" : "website"}
+    content={meta.type === "article" ? "article" : "website"}
   />
+
   {canonicalURL && <meta property="og:url" content={canonicalURL} />}
   <meta property="og:title" content={meta.title} />
   <meta property="og:description" content={meta.description} />
