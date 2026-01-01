@@ -20,13 +20,10 @@ const site = getRuntimeSite(Astro.request);
 let meta: Meta | ArticleMeta;
 
 if (passedMeta) {
-  // ✅ API / Worker / dynamic pages (articles)
   meta = passedMeta;
 } else if (entry?.collection) {
-  // ✅ Astro content collections
   meta = await getMeta(entry);
 } else {
-  // ✅ HOME PAGE (multi-domain safe)
   meta = {
     title: site.title,
     metaTitle: site.title,
@@ -34,7 +31,7 @@ if (passedMeta) {
       ? `Latest news, expert insights, and trending stories from ${site.title}.`
       : "Latest news, expert insights, and trending stories.",
     type: "website",
-    ogImage: "/og/home.jpg", // shared default
+    ogImage: "/og/home.jpg",
     ogImageAlt: site.title,
   };
 }
@@ -45,7 +42,24 @@ const dir = "ltr";
 ---
 
 <html lang={locale} dir={dir}>
-  <Head meta={meta} />
+  <head>
+    <!-- 🔗 Preconnect critical origins -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+
+    <!-- 🔤 Preload ONE critical font (used in headings) -->
+    <link
+      rel="preload"
+      href="/_astro/source-serif-4.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <!-- Head component (meta, SEO, CSS) -->
+    <Head meta={meta} />
+  </head>
+
   <body class="flex flex-col">
     <Header />
     <main class="flex-1">

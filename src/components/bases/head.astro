@@ -1,9 +1,5 @@
 ---
 import "@/styles/global.css";
-import "@fontsource/source-sans-pro/400.css";
-import "@fontsource/source-sans-pro/600.css";
-import "@fontsource/source-sans-pro/700.css";
-import "@fontsource-variable/source-serif-4";
 import type { ArticleMeta, Meta } from "@/lib/types";
 import { siteConfig } from "@/lib/siteConfig";
 
@@ -33,7 +29,7 @@ const OGImage =
       : `${origin}${meta.ogImage}`
     : "";
 
-/* ---------- ANALYTICS (DOMAIN SAFE) ---------- */
+/* ---------- ANALYTICS ---------- */
 const hostname = (url?.hostname || "").replace(/^www\./, "");
 const isIP = /^[\d.]+$/.test(hostname);
 const site = siteConfig[url?.hostname || ""] || siteConfig[hostname];
@@ -80,16 +76,6 @@ const articleSchema =
         },
       })
     : null;
-
-/* ---------- GA INLINE SCRIPT ---------- */
-const gaInlineScript = GA_ID
-  ? `
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', '${GA_ID}');
-`
-  : null;
 ---
 
 <head>
@@ -106,6 +92,22 @@ gtag('config', '${GA_ID}');
   <title>{meta.metaTitle ?? meta.title}</title>
   <meta name="description" content={meta.description} />
 
+  <!-- 🔤 FONTS (NON-BLOCKING) -->
+  <link
+    rel="preload"
+    href="/_astro/source-serif-4.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+  <link
+    rel="preload"
+    href="/_astro/source-sans-pro-regular.woff2"
+    as="font"
+    type="font/woff2"
+    crossorigin
+  />
+
   <!-- OPEN GRAPH -->
   <meta
     property="og:type"
@@ -116,7 +118,7 @@ gtag('config', '${GA_ID}');
   <meta property="og:description" content={meta.description} />
   {OGImage && <meta property="og:image" content={OGImage} />}
 
-  <!-- ARTICLE OG DATES (Discover Boost) -->
+  <!-- ARTICLE DATES -->
   {
     meta.type === "article" && meta.publishedTime && (
       <meta property="article:published_time" content={meta.publishedTime} />
@@ -135,30 +137,36 @@ gtag('config', '${GA_ID}');
   <meta name="twitter:description" content={meta.description} />
   {OGImage && <meta name="twitter:image" content={OGImage} />}
 
-  <!-- BREADCRUMB SCHEMA -->
+  <!-- SCHEMA -->
   {
     breadcrumbSchema && (
       <script type="application/ld+json" set:html={breadcrumbSchema} />
     )
   }
-
-  <!-- NEWS ARTICLE SCHEMA -->
   {
     articleSchema && (
       <script type="application/ld+json" set:html={articleSchema} />
     )
   }
 
-  <!-- GOOGLE ANALYTICS -->
+  <!-- GOOGLE ANALYTICS (DELAYED) -->
   {
     GA_ID && (
-      <>
-        <script
-          async
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-        />
-        <script is:inline set:html={gaInlineScript} />
-      </>
+      <script is:inline>
+        {`
+          window.addEventListener('load', () => {
+            const s = document.createElement('script');
+            s.src = 'https://www.googletagmanager.com/gtag/js?id=${GA_ID}';
+            s.async = true;
+            document.head.appendChild(s);
+
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_ID}');
+          });
+        `}
+      </script>
     )
   }
 </head>
