@@ -2,27 +2,40 @@
 import Head from "@/components/bases/head.astro";
 import Header from "@/components/shared/header.astro";
 import Footer from "@/components/shared/footer.astro";
-import type { Entry } from "@/lib/types";
+import type { Entry, Meta, ArticleMeta } from "@/lib/types";
 import { getMeta } from "@/lib/utils/getMeta";
 
-const { entry } = Astro.props;
+type Props = {
+  entry?: Entry;
+  meta?: Meta | ArticleMeta;
+};
 
-/* ✅ SAFE meta handling */
-let meta;
+const { entry, meta: passedMeta } = Astro.props;
 
-if (entry?.collection) {
-  meta = getMeta(entry);
+/* ---------- RESOLVE META ---------- */
+let meta: Meta | ArticleMeta;
+
+if (passedMeta) {
+  // ✅ API / Worker / Dynamic pages (YOUR ARTICLE PAGE)
+  meta = passedMeta;
+} else if (entry?.collection) {
+  // ✅ Content collection pages
+  meta = await getMeta(entry);
 } else {
+  // ✅ Absolute safe fallback
   meta = {
-    title: entry?.data?.title || "News",
-    description: entry?.data?.description || "",
-    image: entry?.data?.cover || "",
+    title: "News",
+    metaTitle: "News",
+    description: "",
+    type: "website",
+    ogImage: "",
+    ogImageAlt: "",
   };
 }
 
-/* ✅ SAFE html attributes (multi-domain compatible) */
-const locale = "en"; // or derive from entry
-const dir = "ltr"; // safe default
+/* ---------- HTML ATTRIBUTES ---------- */
+const locale = "en";
+const dir = "ltr";
 ---
 
 <html lang={locale} dir={dir}>

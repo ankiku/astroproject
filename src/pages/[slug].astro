@@ -52,24 +52,21 @@ const latestData = latestRes.ok ? await latestRes.json() : {};
 const latestArticles = (latestData.articles || [])
   .filter((item) => item.slug !== slug)
   .slice(0, 3);
-
-/* ---------- ENTRY FOR HEAD ---------- */
-const entry = {
-  data: {
-    title: article.title,
-    metaTitle: article.title,
-    description: metaDescription,
-    type: "article",
-    ogImage: article.featured_image || "",
-    ogImageAlt: article.title,
-    publishedTime: article.created_at || new Date().toISOString(),
-    lastModified:
-      article.updated_at || article.created_at || new Date().toISOString(),
-  },
+/* ---------- META FOR HEAD ---------- */
+const meta = {
+  title: article.title,
+  metaTitle: article.title,
+  description: metaDescription,
+  type: "article", // 🔒 THIS is what controls og:type
+  ogImage: article.featured_image || "",
+  ogImageAlt: article.title,
+  publishedTime: article.created_at || new Date().toISOString(),
+  lastModified:
+    article.updated_at || article.created_at || new Date().toISOString(),
 };
 ---
 
-<BaseLayout entry={entry}>
+<BaseLayout meta={meta}>
   <ContentLayout>
     <!-- ARTICLE -->
     <article class="prose prose-lg mx-auto">
