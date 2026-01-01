@@ -71,14 +71,17 @@ const meta = {
     <!-- ARTICLE -->
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
-
       {
         article.featured_image && (
           <img
             src={article.featured_image}
             alt={article.title}
-            class="w-full h-auto rounded-md"
-            loading="lazy"
+            width="1200"
+            height="675"
+            class="w-full aspect-video rounded-md object-cover"
+            decoding="async"
+            loading="eager"
+            fetchpriority="high"
           />
         )
       }
