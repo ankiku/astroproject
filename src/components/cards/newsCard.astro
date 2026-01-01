@@ -23,16 +23,6 @@ const { article, index } = Astro.props;
  */
 const isLCP = index === 0;
 const eagerLoad = index === 0 || index === 1;
-
-/**
- * Cloudflare Image Resizing helper
- * Adjust widths based on layout
- */
-const cfImage = (url: string, width: number) =>
-  `/cdn-cgi/image/width=${width},quality=80,format=auto/${url.replace(
-    /^https?:\/\/[^/]+/,
-    "",
-  )}`;
 ---
 
 <article
@@ -49,11 +39,11 @@ const cfImage = (url: string, width: number) =>
       {
         article.cover && (
           <img
-            src={cfImage(article.cover, 700)}
+            src={article.cover}
             srcset={`
-              ${cfImage(article.cover, 400)} 400w,
-              ${cfImage(article.cover, 700)} 700w,
-              ${cfImage(article.cover, 900)} 900w
+              ${article.cover}?w=400 400w,
+              ${article.cover}?w=700 700w,
+              ${article.cover}?w=900 900w
             `}
             sizes="(max-width: 640px) 90vw, 674px"
             alt={article.title}

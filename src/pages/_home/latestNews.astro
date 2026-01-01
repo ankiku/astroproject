@@ -20,23 +20,7 @@ if (!res.ok) {
 const data = await res.json();
 const articles = data.articles || [];
 const totalPages = Number(data.total_pages) || 1;
-
-/* ---------- CLOUDflare LCP IMAGE (PAGE 1 ONLY) ---------- */
-const lcpImage =
-  page === 1 && articles.length
-    ? `/cdn-cgi/image/width=700,quality=80,format=auto/${articles[0].featured_image.replace(
-        /^https?:\/\/[^/]+/,
-        "",
-      )}`
-    : null;
 ---
-
-{/* ✅ Preload EXACT LCP image */}
-{
-  lcpImage && (
-    <link rel="preload" as="image" href={lcpImage} fetchpriority="high" />
-  )
-}
 
 <section>
   <HeaderSection title="Latest News" />
