@@ -4,6 +4,7 @@ import Header from "@/components/shared/header.astro";
 import Footer from "@/components/shared/footer.astro";
 import type { Entry, Meta, ArticleMeta } from "@/lib/types";
 import { getMeta } from "@/lib/utils/getMeta";
+import { getRuntimeSite } from "@/lib/siteConfig";
 
 type Props = {
   entry?: Entry;
@@ -12,24 +13,29 @@ type Props = {
 
 const { entry, meta: passedMeta } = Astro.props;
 
+/* ---------- SITE (MULTI-DOMAIN SAFE) ---------- */
+const site = getRuntimeSite(Astro.request);
+
 /* ---------- RESOLVE META ---------- */
 let meta: Meta | ArticleMeta;
 
 if (passedMeta) {
-  // ✅ API / Worker / Dynamic pages (YOUR ARTICLE PAGE)
+  // ✅ API / Worker / dynamic pages (articles)
   meta = passedMeta;
 } else if (entry?.collection) {
-  // ✅ Content collection pages
+  // ✅ Astro content collections
   meta = await getMeta(entry);
 } else {
-  // ✅ Absolute safe fallback
+  // ✅ HOME PAGE (multi-domain safe)
   meta = {
-    title: "News",
-    metaTitle: "News",
-    description: "",
+    title: site.title,
+    metaTitle: site.title,
+    description: site.shortTitle
+      ? `Latest news, expert insights, and trending stories from ${site.title}.`
+      : "Latest news, expert insights, and trending stories.",
     type: "website",
-    ogImage: "",
-    ogImageAlt: "",
+    ogImage: "/og/home.jpg", // shared default
+    ogImageAlt: site.title,
   };
 }
 
