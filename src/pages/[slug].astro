@@ -60,9 +60,8 @@ const meta = {
   type: "article", // 🔒 THIS is what controls og:type
   ogImage: article.featured_image || "",
   ogImageAlt: article.title,
-  publishedTime: article.created_at || new Date().toISOString(),
-  lastModified:
-    article.updated_at || article.created_at || new Date().toISOString(),
+  publishedTime: article.published_date || new Date().toISOString(),
+  lastModified: article.published_date || new Date().toISOString(),
 };
 ---
 
