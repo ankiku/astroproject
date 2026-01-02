@@ -61,8 +61,8 @@ export async function GET({ request }) {
   const entries = articles
     .filter((a) => a.slug)
     .map((article) => {
-      const lastmod = article.created_at
-        ? new Date(article.created_at).toISOString()
+      const lastmod = article.published_date
+        ? new Date(article.published_date).toISOString()
         : new Date().toISOString();
 
       return `
