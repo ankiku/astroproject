@@ -6,14 +6,14 @@ export async function GET({ request }) {
 
   return new Response(
     `User-agent: *
-  Allow: /
+Allow: /
 
-  # Main sitemap index
-  Sitemap: ${base}/sitemap.xml
+# Main sitemap index
+Sitemap: ${base}/sitemap.xml
 
-  # Child sitemaps
-  Sitemap: ${base}/sitemap-pages.xml
-  Sitemap: ${base}/sitemap-posts.xml
+# Child sitemaps
+Sitemap: ${base}/sitemap-pages.xml
+Sitemap: ${base}/sitemap-posts.xml
 
 `,
     {
