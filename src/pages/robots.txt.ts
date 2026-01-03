@@ -1,20 +1,19 @@
 export const prerender = false;
 
-export async function GET({ site }) {
-  const base =
-    site?.toString().replace(/\/$/, "") ||
-    "https://www.germanyfinanz.news";
+export async function GET({ request }) {
+  const url = new URL(request.url);
+  const base = `${url.protocol}//${url.host}`;
 
   return new Response(
     `User-agent: *
-Allow: /
+    Allow: /
 
-# Main sitemap index
-Sitemap: ${base}/sitemap.xml
+    # Main sitemap index
+    Sitemap: ${base}/sitemap.xml
 
-# Child sitemaps
-Sitemap: ${base}/sitemap-pages.xml
-Sitemap: ${base}/sitemap-posts.xml
+    # Child sitemaps
+    Sitemap: ${base}/sitemap-pages.xml
+    Sitemap: ${base}/sitemap-posts.xml
 
 `,
     {
