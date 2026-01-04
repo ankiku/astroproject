@@ -40,7 +40,7 @@ export async function GET({ request }) {
   const base = getBaseURL(request);
   const apiSite = getApiSite(request);
 
-  const API_URL = `https://calcstatetax.com/api/news/?site=${apiSite}`;
+  const API_URL = `https://calcstatetax.com/api/sitemap/?site=${apiSite}`;
 
   let articles: any[] = [];
 
