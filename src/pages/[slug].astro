@@ -27,10 +27,10 @@ const articleRes = await fetch(
   { headers: { Accept: "application/json" } },
 );
 
-if (!articleRes.ok) return Astro.redirect("/404");
+if (!articleRes.ok) return Astro.redirect("/302");
 
 const article = await articleRes.json();
-if (!article?.slug) return Astro.redirect("/404");
+if (!article?.slug) return Astro.redirect("/302");
 
 /* ---------- META DESCRIPTION (25 WORDS) ---------- */
 const stripHtml = (html = "") =>

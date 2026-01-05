@@ -6,7 +6,7 @@ import { getEntry } from "astro:content";
 const entry = await getEntry("views", "search");
 
 if (!entry) {
-  return Astro.redirect("/404");
+  return Astro.redirect("/302");
 }
 ---
 
