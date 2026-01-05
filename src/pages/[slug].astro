@@ -22,21 +22,29 @@ const articleRes = await fetch(
   { headers: { Accept: "application/json" } },
 );
 
-if (!articleRes.ok) return Astro.redirect("/302");
+if (!articleRes.ok) {
+  return new Response("Not Found", { status: 404 });
+}
 
 const article = await articleRes.json();
-if (!article?.slug) return Astro.redirect("/302");
+if (!article?.slug) {
+  return new Response("Not Found", { status: 404 });
+}
 
 /* ---------- FETCH RELATED ARTICLES ---------- */
-const relatedRes = await fetch(
-  `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=12`,
-  { headers: { Accept: "application/json" } },
-);
+let relatedArticles = [];
 
-const relatedData = relatedRes.ok ? await relatedRes.json() : {};
-const relatedArticles = (relatedData.articles || []).filter(
-  (a) => a.slug !== slug,
-);
+try {
+  const relatedRes = await fetch(
+    `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=6`,
+    { headers: { Accept: "application/json" } },
+  );
+
+  const relatedData = relatedRes.ok ? await relatedRes.json() : {};
+  relatedArticles = (relatedData.articles || []).filter((a) => a.slug !== slug);
+} catch {
+  relatedArticles = [];
+}
 
 /* ---------- UTIL ---------- */
 const stripHtml = (html = "") =>
@@ -50,14 +58,34 @@ const sortedArticles = relatedArticles.sort(
   (a, b) => new Date(a.published_date) - new Date(b.published_date),
 );
 
-/* ---------- SAFE PHRASE EXTRACTION ---------- */
-const extractAnchorPhrase = (title = "") => {
+/* ---------- KEYWORD EXTRACTOR (SAFE) ---------- */
+const extractKeywords = (title = "") => {
+  const stopWords = new Set([
+    "the",
+    "when",
+    "that",
+    "with",
+    "from",
+    "this",
+    "which",
+    "your",
+    "youre",
+    "about",
+    "their",
+    "there",
+    "people",
+    "while",
+    "where",
+    "would",
+    "could",
+  ]);
+
   return title
-    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
     .split(" ")
-    .filter((w) => w.length >= 5)
-    .slice(0, 3)
-    .join(" ");
+    .filter((w) => w.length >= 6 && !stopWords.has(w))
+    .slice(0, 3);
 };
 
 /* ---------- HTML-SAFE INTERNAL LINKING ---------- */
@@ -67,7 +95,7 @@ const advancedInternalLinks = (html = "") => {
   const MAX_LINKS = 3;
   let used = 0;
 
-  // Split HTML into tags and text nodes
+  // Split HTML into tags + text nodes
   const parts = html.split(/(<[^>]+>)/g);
 
   for (let i = 0; i < parts.length; i++) {
@@ -82,21 +110,24 @@ const advancedInternalLinks = (html = "") => {
     for (const a of sortedArticles) {
       if (used >= MAX_LINKS) break;
 
-      const phrase = extractAnchorPhrase(a.title);
-      if (!phrase) continue;
+      const keywords = extractKeywords(a.title);
 
-      // Skip if link already exists
-      if (html.includes(`href="/${a.slug}"`)) continue;
+      for (const keyword of keywords) {
+        if (used >= MAX_LINKS) break;
 
-      const regex = new RegExp(`\\b(${phrase})\\b`, "i");
+        const currentHTML = parts.join("");
+        if (currentHTML.includes(`href="/${a.slug}"`)) continue;
 
-      if (regex.test(parts[i])) {
-        parts[i] = parts[i].replace(
-          regex,
-          `<a href="/${a.slug}" class="internal-link">$1</a>`,
-        );
-        used++;
-        break;
+        const regex = new RegExp(`\\b(${keyword})\\b`, "i");
+
+        if (regex.test(parts[i])) {
+          parts[i] = parts[i].replace(
+            regex,
+            `<a href="/${a.slug}" class="internal-link">$1</a>`,
+          );
+          used++;
+          break;
+        }
       }
     }
   }
@@ -113,6 +144,9 @@ const meta = {
     article.title,
   type: "article",
   ogImage: article.featured_image || "",
+  canonical: `https://${site}/${article.slug}`,
+  publishedTime: article.published_date,
+  lastModified: article.published_date,
 };
 ---
 
@@ -135,7 +169,7 @@ const meta = {
         )
       }
 
-      <!-- ✅ SAFE INTERNAL LINKS -->
+      <!-- ✅ WORKING INTERNAL LINKS -->
       <div class="mt-6" set:html={advancedInternalLinks(article.content)} />
     </article>
 
