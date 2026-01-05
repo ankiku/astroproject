@@ -1,13 +1,17 @@
 ---
-const url = new URL(Astro.request.url);
-
-// ❌ Do NOT redirect home to itself
-if (url.pathname !== "/") {
-  return Astro.redirect("/", 302);
-}
-
-// If already home, show normal 404 content
+export const prerender = true;
 ---
 
-<h1>Page not found</h1>
-<a href="/">Go back home</a>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Page Not Found</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body style="font-family: sans-serif; text-align: center; padding: 4rem;">
+    <h1>404 – Page Not Found</h1>
+    <p>The page you’re looking for doesn’t exist.</p>
+    <a href="/" style="color: blue;">Go back home</a>
+  </body>
+</html>
