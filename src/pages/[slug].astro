@@ -32,13 +32,14 @@ if (!articleRes.ok) return Astro.redirect("/302");
 const article = await articleRes.json();
 if (!article?.slug) return Astro.redirect("/302");
 
-/* ---------- META DESCRIPTION (25 WORDS) ---------- */
+/* ---------- STRIP HTML ---------- */
 const stripHtml = (html = "") =>
   html
     .replace(/<[^>]*>/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
+/* ---------- META DESCRIPTION ---------- */
 const metaDescription =
   stripHtml(article.content).split(" ").slice(0, 25).join(" ") || article.title;
 
@@ -52,12 +53,78 @@ const latestData = latestRes.ok ? await latestRes.json() : {};
 const latestArticles = (latestData.articles || [])
   .filter((item) => item.slug !== slug)
   .slice(0, 3);
-/* ---------- META FOR HEAD ---------- */
+
+/* ---------- KEYWORD EXTRACTION ---------- */
+const extractKeywords = (title = "") => {
+  const stopWords = new Set([
+    "the",
+    "is",
+    "are",
+    "and",
+    "or",
+    "to",
+    "of",
+    "in",
+    "for",
+    "on",
+    "with",
+    "a",
+    "an",
+    "this",
+    "that",
+    "from",
+    "by",
+    "as",
+    "at",
+  ]);
+
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .split(" ")
+    .filter((word) => word.length >= 4 && !stopWords.has(word))
+    .slice(0, 5);
+};
+
+/* ---------- AUTO KEYWORD LINKING ---------- */
+const autoKeywordLinking = (html = "", articles = [], maxLinks = 3) => {
+  if (!html || articles.length === 0) return html;
+
+  let used = 0;
+  let output = html;
+
+  for (const article of articles) {
+    if (used >= maxLinks) break;
+
+    const keywords = extractKeywords(article.title);
+
+    for (const keyword of keywords) {
+      if (used >= maxLinks) break;
+
+      if (output.includes(`href="/${article.slug}"`)) continue;
+
+      const regex = new RegExp(`\\b(${keyword})\\b`, "i");
+
+      if (regex.test(output)) {
+        output = output.replace(
+          regex,
+          `<a href="/${article.slug}" class="internal-link">$1</a>`,
+        );
+        used++;
+        break;
+      }
+    }
+  }
+
+  return output;
+};
+
+/* ---------- META ---------- */
 const meta = {
   title: article.title,
   metaTitle: article.title,
   description: metaDescription,
-  type: "article", // 🔒 THIS is what controls og:type
+  type: "article",
   ogImage: article.featured_image || "",
   ogImageAlt: article.title,
   publishedTime: article.published_date || new Date().toISOString(),
@@ -70,6 +137,7 @@ const meta = {
     <!-- ARTICLE -->
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
+
       {
         article.featured_image && (
           <img
@@ -85,10 +153,13 @@ const meta = {
         )
       }
 
-      <div class="mt-6" set:html={article.content} />
+      <div
+        class="mt-6"
+        set:html={autoKeywordLinking(article.content, latestArticles)}
+      />
     </article>
 
-    <!-- RECENT / LATEST NEWS -->
+    <!-- LATEST NEWS -->
     {
       latestArticles.length > 0 && (
         <section class="mt-16 border-t pt-10">
