@@ -1,3 +1,13 @@
 ---
-return Astro.redirect("/", 302);
+const url = new URL(Astro.request.url);
+
+// ❌ Do NOT redirect home to itself
+if (url.pathname !== "/") {
+  return Astro.redirect("/", 302);
+}
+
+// If already home, show normal 404 content
 ---
+
+<h1>Page not found</h1>
+<a href="/">Go back home</a>
