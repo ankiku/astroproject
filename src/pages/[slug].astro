@@ -12,19 +12,14 @@ const WORKER_URL = "https://news-cache-worker.ankitnav1998.workers.dev";
 
 /* ---------- DOMAIN ---------- */
 let site = Astro.request?.headers.get("host") || "";
-if (
-  !site ||
-  site.includes("localhost") ||
-  site.includes("127.0.0.1") ||
-  site.includes("astro.local")
-) {
+if (!site || site.includes("localhost") || site.includes("astro.local")) {
   site = "www.germanyfinanz.news";
 }
 
 /* ---------- FETCH ARTICLE ---------- */
 const articleRes = await fetch(
   `${WORKER_URL}/news-slug?slug=${encodeURIComponent(slug)}`,
-  { headers: { Accept: "application/json" } },
+  { headers: { Accept: "application/json" } }
 );
 
 if (!articleRes.ok) return Astro.redirect("/302");
@@ -32,85 +27,74 @@ if (!articleRes.ok) return Astro.redirect("/302");
 const article = await articleRes.json();
 if (!article?.slug) return Astro.redirect("/302");
 
-/* ---------- STRIP HTML ---------- */
-const stripHtml = (html = "") =>
-  html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-/* ---------- META DESCRIPTION ---------- */
-const metaDescription =
-  stripHtml(article.content).split(" ").slice(0, 25).join(" ") || article.title;
-
-/* ---------- FETCH LATEST NEWS ---------- */
-const latestRes = await fetch(
-  `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=6`,
-  { headers: { Accept: "application/json" } },
+/* ---------- FETCH ARTICLES (FOR SILO) ---------- */
+const relatedRes = await fetch(
+  `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=12`,
+  { headers: { Accept: "application/json" } }
 );
 
-const latestData = latestRes.ok ? await latestRes.json() : {};
-const latestArticles = (latestData.articles || [])
-  .filter((item) => item.slug !== slug)
-  .slice(0, 3);
+const relatedData = relatedRes.ok ? await relatedRes.json() : {};
+const relatedArticles = (relatedData.articles || []).filter(
+  (a) => a.slug !== slug
+);
+
+/* ---------- UTIL ---------- */
+const stripHtml = (html = "") =>
+  html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+/* ---------- CATEGORY / SILO DETECTION ---------- */
+const getSilo = (title = "") => {
+  const t = title.toLowerCase();
+  if (t.includes("tax")) return "tax";
+  if (t.includes("loan") || t.includes("credit")) return "finance";
+  if (t.includes("government") || t.includes("policy")) return "policy";
+  return "general";
+};
+
+const articleSilo = getSilo(article.title);
 
 /* ---------- KEYWORD EXTRACTION ---------- */
-const extractKeywords = (title = "") => {
-  const stopWords = new Set([
-    "the",
-    "is",
-    "are",
-    "and",
-    "or",
-    "to",
-    "of",
-    "in",
-    "for",
-    "on",
-    "with",
-    "a",
-    "an",
-    "this",
-    "that",
-    "from",
-    "by",
-    "as",
-    "at",
-  ]);
-
-  return title
+const extractKeywords = (title = "") =>
+  title
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, "")
     .split(" ")
-    .filter((word) => word.length >= 4 && !stopWords.has(word))
-    .slice(0, 5);
-};
+    .filter((w) => w.length >= 4)
+    .slice(0, 4);
 
-/* ---------- AUTO KEYWORD LINKING ---------- */
-const autoKeywordLinking = (html = "", articles = [], maxLinks = 3) => {
-  if (!html || articles.length === 0) return html;
+/* ---------- AUTHORITY SORT (OLDER FIRST) ---------- */
+const sortedArticles = relatedArticles.sort((a, b) => {
+  return new Date(a.published_date) - new Date(b.published_date);
+});
 
-  let used = 0;
+/* ---------- ADVANCED INTERNAL LINKING ---------- */
+const advancedInternalLinks = (html = "") => {
+  if (!html) return html;
+
   let output = html;
+  let linksUsed = 0;
+  const MAX_LINKS = 4;
 
-  for (const article of articles) {
-    if (used >= maxLinks) break;
+  for (const a of sortedArticles) {
+    if (linksUsed >= MAX_LINKS) break;
 
-    const keywords = extractKeywords(article.title);
+    // SILO MATCH
+    if (getSilo(a.title) !== articleSilo) continue;
+
+    const keywords = extractKeywords(a.title);
 
     for (const keyword of keywords) {
-      if (used >= maxLinks) break;
-
-      if (output.includes(`href="/${article.slug}"`)) continue;
+      if (linksUsed >= MAX_LINKS) break;
+      if (output.includes(`href="/${a.slug}"`)) continue;
 
       const regex = new RegExp(`\\b(${keyword})\\b`, "i");
 
       if (regex.test(output)) {
         output = output.replace(
           regex,
-          `<a href="/${article.slug}" class="internal-link">$1</a>`,
+          `<a href="/${a.slug}" class="internal-link">$1</a>`
         );
-        used++;
+        linksUsed++;
         break;
       }
     }
@@ -123,12 +107,11 @@ const autoKeywordLinking = (html = "", articles = [], maxLinks = 3) => {
 const meta = {
   title: article.title,
   metaTitle: article.title,
-  description: metaDescription,
+  description:
+    stripHtml(article.content).split(" ").slice(0, 25).join(" ") ||
+    article.title,
   type: "article",
   ogImage: article.featured_image || "",
-  ogImageAlt: article.title,
-  publishedTime: article.published_date || new Date().toISOString(),
-  lastModified: article.published_date || new Date().toISOString(),
 };
 ---
 
@@ -138,48 +121,43 @@ const meta = {
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
 
-      {
-        article.featured_image && (
-          <img
-            src={article.featured_image}
-            alt={article.title}
-            width="1200"
-            height="675"
-            class="w-full aspect-video rounded-md object-cover"
-            decoding="async"
-            loading="eager"
-            fetchpriority="high"
-          />
-        )
-      }
+      {article.featured_image && (
+        <img
+          src={article.featured_image}
+          alt={article.title}
+          width="1200"
+          height="675"
+          class="w-full aspect-video rounded-md object-cover"
+          loading="eager"
+        />
+      )}
 
+      <!-- 🔥 ADVANCED SILO INTERNAL LINKS -->
       <div
         class="mt-6"
-        set:html={autoKeywordLinking(article.content, latestArticles)}
+        set:html={advancedInternalLinks(article.content)}
       />
     </article>
 
-    <!-- LATEST NEWS -->
-    {
-      latestArticles.length > 0 && (
-        <section class="mt-16 border-t pt-10">
-          <h2 class="text-2xl font-bold mb-6">Latest News</h2>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {latestArticles.map((item, index) => (
-              <NewsCard
-                article={{
-                  title: item.title,
-                  slug: item.slug,
-                  description: stripHtml(item.content).slice(0, 140) + "...",
-                  cover: item.featured_image,
-                }}
-                index={index}
-              />
-            ))}
-          </div>
-        </section>
-      )
-    }
+    <!-- LATEST -->
+    {relatedArticles.length > 0 && (
+      <section class="mt-16 border-t pt-10">
+        <h2 class="text-2xl font-bold mb-6">Latest News</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {relatedArticles.slice(0, 3).map((item, index) => (
+            <NewsCard
+              article={{
+                title: item.title,
+                slug: item.slug,
+                description:
+                  stripHtml(item.content).slice(0, 140) + "...",
+                cover: item.featured_image,
+              }}
+              index={index}
+            />
+          ))}
+        </div>
+      </section>
+    )}
   </ContentLayout>
 </BaseLayout>
