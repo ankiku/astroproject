@@ -19,7 +19,7 @@ if (!site || site.includes("localhost") || site.includes("astro.local")) {
 /* ---------- FETCH ARTICLE ---------- */
 const articleRes = await fetch(
   `${WORKER_URL}/news-slug?slug=${encodeURIComponent(slug)}`,
-  { headers: { Accept: "application/json" } }
+  { headers: { Accept: "application/json" } },
 );
 
 if (!articleRes.ok) return Astro.redirect("/302");
@@ -27,80 +27,81 @@ if (!articleRes.ok) return Astro.redirect("/302");
 const article = await articleRes.json();
 if (!article?.slug) return Astro.redirect("/302");
 
-/* ---------- FETCH ARTICLES (FOR SILO) ---------- */
+/* ---------- FETCH RELATED ARTICLES ---------- */
 const relatedRes = await fetch(
   `${WORKER_URL}/news-cache?site=${encodeURIComponent(site)}&limit=12`,
-  { headers: { Accept: "application/json" } }
+  { headers: { Accept: "application/json" } },
 );
 
 const relatedData = relatedRes.ok ? await relatedRes.json() : {};
 const relatedArticles = (relatedData.articles || []).filter(
-  (a) => a.slug !== slug
+  (a) => a.slug !== slug,
 );
 
 /* ---------- UTIL ---------- */
 const stripHtml = (html = "") =>
-  html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-/* ---------- CATEGORY / SILO DETECTION ---------- */
-const getSilo = (title = "") => {
-  const t = title.toLowerCase();
-  if (t.includes("tax")) return "tax";
-  if (t.includes("loan") || t.includes("credit")) return "finance";
-  if (t.includes("government") || t.includes("policy")) return "policy";
-  return "general";
+/* ---------- SORT BY AUTHORITY (OLDER FIRST) ---------- */
+const sortedArticles = relatedArticles.sort(
+  (a, b) => new Date(a.published_date) - new Date(b.published_date),
+);
+
+/* ---------- SAFE PHRASE EXTRACTION ---------- */
+const extractAnchorPhrase = (title = "") => {
+  return title
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .split(" ")
+    .filter((w) => w.length >= 5)
+    .slice(0, 3)
+    .join(" ");
 };
 
-const articleSilo = getSilo(article.title);
-
-/* ---------- KEYWORD EXTRACTION ---------- */
-const extractKeywords = (title = "") =>
-  title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .split(" ")
-    .filter((w) => w.length >= 4)
-    .slice(0, 4);
-
-/* ---------- AUTHORITY SORT (OLDER FIRST) ---------- */
-const sortedArticles = relatedArticles.sort((a, b) => {
-  return new Date(a.published_date) - new Date(b.published_date);
-});
-
-/* ---------- ADVANCED INTERNAL LINKING ---------- */
+/* ---------- HTML-SAFE INTERNAL LINKING ---------- */
 const advancedInternalLinks = (html = "") => {
   if (!html) return html;
 
-  let output = html;
-  let linksUsed = 0;
-  const MAX_LINKS = 4;
+  const MAX_LINKS = 3;
+  let used = 0;
 
-  for (const a of sortedArticles) {
-    if (linksUsed >= MAX_LINKS) break;
+  // Split HTML into tags and text nodes
+  const parts = html.split(/(<[^>]+>)/g);
 
-    // SILO MATCH
-    if (getSilo(a.title) !== articleSilo) continue;
+  for (let i = 0; i < parts.length; i++) {
+    if (used >= MAX_LINKS) break;
 
-    const keywords = extractKeywords(a.title);
+    // Skip HTML tags
+    if (parts[i].startsWith("<")) continue;
 
-    for (const keyword of keywords) {
-      if (linksUsed >= MAX_LINKS) break;
-      if (output.includes(`href="/${a.slug}"`)) continue;
+    // Skip if inside anchor
+    if (parts[i - 1]?.startsWith("<a")) continue;
 
-      const regex = new RegExp(`\\b(${keyword})\\b`, "i");
+    for (const a of sortedArticles) {
+      if (used >= MAX_LINKS) break;
 
-      if (regex.test(output)) {
-        output = output.replace(
+      const phrase = extractAnchorPhrase(a.title);
+      if (!phrase) continue;
+
+      // Skip if link already exists
+      if (html.includes(`href="/${a.slug}"`)) continue;
+
+      const regex = new RegExp(`\\b(${phrase})\\b`, "i");
+
+      if (regex.test(parts[i])) {
+        parts[i] = parts[i].replace(
           regex,
-          `<a href="/${a.slug}" class="internal-link">$1</a>`
+          `<a href="/${a.slug}" class="internal-link">$1</a>`,
         );
-        linksUsed++;
+        used++;
         break;
       }
     }
   }
 
-  return output;
+  return parts.join("");
 };
 
 /* ---------- META ---------- */
@@ -121,43 +122,44 @@ const meta = {
     <article class="prose prose-lg mx-auto">
       <h1>{article.title}</h1>
 
-      {article.featured_image && (
-        <img
-          src={article.featured_image}
-          alt={article.title}
-          width="1200"
-          height="675"
-          class="w-full aspect-video rounded-md object-cover"
-          loading="eager"
-        />
-      )}
+      {
+        article.featured_image && (
+          <img
+            src={article.featured_image}
+            alt={article.title}
+            width="1200"
+            height="675"
+            class="w-full aspect-video rounded-md object-cover"
+            loading="eager"
+          />
+        )
+      }
 
-      <!-- 🔥 ADVANCED SILO INTERNAL LINKS -->
-      <div
-        class="mt-6"
-        set:html={advancedInternalLinks(article.content)}
-      />
+      <!-- ✅ SAFE INTERNAL LINKS -->
+      <div class="mt-6" set:html={advancedInternalLinks(article.content)} />
     </article>
 
-    <!-- LATEST -->
-    {relatedArticles.length > 0 && (
-      <section class="mt-16 border-t pt-10">
-        <h2 class="text-2xl font-bold mb-6">Latest News</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {relatedArticles.slice(0, 3).map((item, index) => (
-            <NewsCard
-              article={{
-                title: item.title,
-                slug: item.slug,
-                description:
-                  stripHtml(item.content).slice(0, 140) + "...",
-                cover: item.featured_image,
-              }}
-              index={index}
-            />
-          ))}
-        </div>
-      </section>
-    )}
+    <!-- LATEST NEWS -->
+    {
+      relatedArticles.length > 0 && (
+        <section class="mt-16 border-t pt-10">
+          <h2 class="text-2xl font-bold mb-6">Latest News</h2>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {relatedArticles.slice(0, 3).map((item, index) => (
+              <NewsCard
+                article={{
+                  title: item.title,
+                  slug: item.slug,
+                  description: stripHtml(item.content).slice(0, 140) + "...",
+                  cover: item.featured_image,
+                }}
+                index={index}
+              />
+            ))}
+          </div>
+        </section>
+      )
+    }
   </ContentLayout>
 </BaseLayout>
